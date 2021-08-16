@@ -1,2 +1,7 @@
 # life
-Conway's game of life with options for fixed or periodic boundary conditions
+
+Conway's game of life with options for fixed or periodic boundary conditions.
+
+## Planned features
+
+A modal in which a user may draw an initial state.
