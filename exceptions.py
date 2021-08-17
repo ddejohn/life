@@ -1,8 +1,8 @@
 from typing import Tuple
 
 
-SIZE_ERROR_MSG = """
-The `size` parameter must be a 2-tuple of positive
+DIMS_ERROR_MSG = """
+The `dims` parameter must be a 2-tuple of positive
 integers >= 2 but got '{}' instead.
 """
 
@@ -18,10 +18,10 @@ class LifeError(Exception):
         super().__init__(msg.strip("\n").replace("\n", " "))
 
 
-class SizeError(LifeError):
-    """Exception for Life `size` parameter errors"""
+class DimsError(LifeError):
+    """Exception for Life `dims` parameter errors"""
     def __init__(self, msg: str):
-        super().__init__(SIZE_ERROR_MSG.format(msg))
+        super().__init__(DIMS_ERROR_MSG.format(msg))
 
 
 class BoundaryError(LifeError):
@@ -30,15 +30,15 @@ class BoundaryError(LifeError):
         super().__init__(BOUNDARY_ERROR_MSG.format(msg))
 
 
-def validate_args(size, boundary) -> Tuple[Tuple[int, int], str]:
-    if type(size) != tuple:
-        raise SizeError(type(size).__name__)
-    if not all(dim > 1 for dim in size):
-        raise SizeError(f"{size}")
-    if not all((types := tuple(type(d) == int for d in size))):
-        raise SizeError(f"{[t.__name__ for t in types]}")
+def validate_args(dims, boundary) -> Tuple[Tuple[int, int], str]:
+    if type(dims) != tuple:
+        raise DimsError(type(dims).__name__)
+    if not all(dim > 1 for dim in dims):
+        raise DimsError(f"{dims}")
+    if not all((types := tuple(type(d) == int for d in dims))):
+        raise DimsError(f"{[t.__name__ for t in types]}")
     if type(boundary) != str:
         raise BoundaryError(type(boundary).__name__)
     if boundary not in ("fixed", "periodic"):
         raise BoundaryError(boundary)
-    return size, boundary
+    return dims, boundary
