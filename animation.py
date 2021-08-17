@@ -21,8 +21,6 @@ def make_animation(states):
                 "args": [[None], {"frame": {"duration": 0, "redraw": False},
                                   "mode": "immediate",
                                   "transition": {"duration": 0}}]}]
-
-    fig.update_layout(updatemenus=[dict(type="buttons",
-                                        visible=True,
-                                        buttons=buttons)])
+    menus = [{"type": "buttons", "visible": True, "buttons": buttons}]
+    fig.update_layout(updatemenus=menus)
     fig.show()

@@ -1,3 +1,6 @@
+from typing import Tuple
+
+
 SIZE_ERROR_MSG = """
 The `size` parameter must be a 2-tuple of positive
 integers >= 2 but got '{}' instead.
@@ -25,3 +28,17 @@ class BoundaryError(LifeError):
     """Exception for Life `boundary` parameter errors"""
     def __init__(self, msg: str):
         super().__init__(BOUNDARY_ERROR_MSG.format(msg))
+
+
+def validate_args(size, boundary) -> Tuple[Tuple[int, int], str]:
+    if type(size) != tuple:
+        raise SizeError(type(size).__name__)
+    if not all(dim > 1 for dim in size):
+        raise SizeError(f"{size}")
+    if not all((types := tuple(type(d) == int for d in size))):
+        raise SizeError(f"{[t.__name__ for t in types]}")
+    if type(boundary) != str:
+        raise BoundaryError(type(boundary).__name__)
+    if boundary not in ("fixed", "periodic"):
+        raise BoundaryError(boundary)
+    return size, boundary
