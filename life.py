@@ -66,11 +66,9 @@ class Life:
         return np.where(np.isin(s, range(n // 2 - int(n*0.05))), 1, 0)
         # return np.random.randint(0, 2, self.dims)
 
-    def state_transitions(self,
-                          cells: np.ndarray,
-                          neighbors: np.ndarray) -> np.ndarray:
+    def state_transitions(self, x: int, y: int) -> int:
         """Vectorized helper function for whether a cell should live or die"""
-        return Life.RULES.get((cells, neighbors), 0)
+        return Life.RULES.get((x, y), 0)
 
     def make_filename(self):
         """Generates a filename for the resulting gif"""
