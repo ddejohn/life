@@ -33,7 +33,7 @@ class Life:
         self.__init__(self.dims, self.boundary)
 
     def run(self):
-        """Runs Life until either a stead state is reached, or max frames"""
+        """Runs Life until either a steady state is reached, or max frames"""
         frames = 0
         while True:
             self.generations.append(self.state)
