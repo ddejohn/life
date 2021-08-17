@@ -93,9 +93,7 @@ class Life:
         """Counts number of neighbors for each cell"""
         # Get number of neighboring live cells
         windows = sliding_window_view(self.game_board, (3, 3))
-
-        # Clip to range [0, 4] to simplify rules calculation
-        return np.clip(windows.sum(axis=(2, 3)) - self.state, 0, 4)
+        return windows.sum(axis=(2, 3)) - self.state
 
 
 if __name__ == "__main__":
