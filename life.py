@@ -1,5 +1,7 @@
 # Standard Library
+import sys
 from typing import Tuple
+from ast import literal_eval
 
 # Third party
 import numpy as np
@@ -94,3 +96,9 @@ class Life:
 
         # Clip to range [0, 4] to simplify rules calculation
         return np.clip(windows.sum(axis=(2, 3)) - self.state, 0, 4)
+
+
+if __name__ == "__main__":
+    dims, boundary = sys.argv[1:]
+    dims = literal_eval(dims)
+    Life(dims, boundary)
