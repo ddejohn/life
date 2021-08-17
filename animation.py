@@ -8,6 +8,7 @@ import numpy as np
 import plotly.graph_objects as go
 
 
+# TODO: add more colors
 COLORS = [("#ffba08", "#ff8c61"),
           ("#ffba08", "#43aa8b"),
           ("#00d59e", "#ab63fa"),
