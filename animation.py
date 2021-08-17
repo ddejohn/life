@@ -1,26 +1,41 @@
+# Standard Library
+from typing import List
+from random import choice, sample
+
+# Third party
+import gif
+import numpy as np
 import plotly.graph_objects as go
 
 
-def make_animation(states):
-    colors = ((0, "#ffba08"), (1, "#43aa8b"))
-    first_plot = go.Heatmap(z=states[0], colorscale=colors)
-    frames = [go.Frame(data=go.Heatmap(z=state)) for state in states[1:]]
+COLORS = [("#ffba08", "#ff8c61"),
+          ("#ffba08", "#43aa8b"),
+          ("#00d59e", "#ab63fa"),
+          ("#ff928b", "#b392ac"),
+          ("#ff928b", "#b392ac"),
+          ("#ffba08", "#ff8c61"),
+          ("#ffba08", "#43aa8b"),
+          ("#00d59e", "#ab63fa")]
 
-    fig = go.Figure(data=first_plot, frames=frames)
+
+@gif.frame
+def make_plot(state: np.ndarray, colors: List[str]) -> go.Figure:
+    fig = go.Figure(go.Heatmap(z=state, colorscale=colors))
     fig.update_traces(showscale=False)
     fig.update_layout(width=700,
                       height=700,
                       xaxis_visible=False,
-                      yaxis_visible=False)
+                      yaxis_visible=False,
+                      margin_t=0,
+                      margin_b=0,
+                      margin_l=0,
+                      margin_r=0)
+    return fig
 
-    buttons = [{"label": "play",
-                "method": "animate",
-                "args": [None]},
-               {"label": "pause",
-                "method": "animate",
-                "args": [[None], {"frame": {"duration": 0, "redraw": False},
-                                  "mode": "immediate",
-                                  "transition": {"duration": 0}}]}]
-    menus = [{"type": "buttons", "visible": True, "buttons": buttons}]
-    fig.update_layout(updatemenus=menus)
-    fig.show()
+
+def make_animation(states: np.ndarray, filename: str):
+    colors = sample(choice(COLORS), k=2)
+    c0, c1 = [c.strip("#") for c in colors]
+    filename = f"{filename}_{c0}_{c1}.gif"
+    frames = [make_plot(s, colors) for s in states]
+    gif.save(frames, filename, duration=max(len(frames)//10, 4))
