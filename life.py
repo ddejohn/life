@@ -21,6 +21,7 @@ class Life:
     RULES = {(1, 2): 1,
              (1, 3): 1,
              (0, 3): 1}
+    TRANSITION = np.vectorize(lambda x, y: Life.RULES.get((x, y), 0))
 
     def __init__(self, dims: Tuple[int] = (50, 50), boundary: str = "fixed"):
         self.dims, self.boundary = exceptions.validate_args(dims, boundary)

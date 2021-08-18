@@ -36,7 +36,7 @@ def make_plot(state: np.ndarray, colors: List[str]) -> go.Figure:
 
 def make_animation(states: np.ndarray, filename: str):
     colors = sample(choice(COLORS), k=2)
-    c0, c1 = [c.strip("#") for c in colors]
+    c0, c1 = [c.strip("#") for c in sample(choice(COLORS), k=2)]
     filename = f"{filename}_{c0}_{c1}.gif"
     frames = [make_plot(s, colors) for s in states]
-    gif.save(frames, filename, duration=max(len(frames)//10, 4))
+    gif.save(frames, filename, duration=50)
