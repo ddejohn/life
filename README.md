@@ -86,8 +86,6 @@ RULES = {(1, 2): 1,
          (0, 3): 1}
 ```
 
-
-
 ## Planned features
 
 A modal in which a user may draw an initial state.
