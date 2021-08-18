@@ -116,6 +116,7 @@ def make_sliding_window_plot(big_fig, windows, *, dims, central_dims, refs):
                        "line_width": line_width,
                        "line_color": BOARD_COLOR})
 
+    # TODO: implement shape maker helper function
     shapes += [{"type": "rect",
                 "x0": -0.5,
                 "y0": 4.5,
