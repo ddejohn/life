@@ -1,101 +1,129 @@
 # Standard Library
-import sys
-from typing import Tuple
-from ast import literal_eval
+from typing import Iterator, List
 
 # Third party
 import numpy as np
-from numpy.lib.stride_tricks import sliding_window_view
 
 # Local
 import exceptions
 import animation
 
+# Custom types
+LifeGenerator = Iterator[np.ndarray]
+
 
 class Life:
-    # (self_value, neighbor_count) tuples, apply Life rules to neighbor windows
-    # Underpopulation: a live cell with <= 1 live neighbors dies
-    # Survival: a live cell with 2 or 3 neighbors survives
-    # Overpopulation: a live cell with >= 4 live neighbors dies
-    # Reproduction: a dead cell with 3 neighbors is reborn
-    RULES = {(1, 2): 1,
-             (1, 3): 1,
-             (0, 3): 1}
-    TRANSITION = np.vectorize(lambda x, y: Life.RULES.get((x, y), 0))
+    def __init__(self, n: int = 50, bounds: str = "fixed"):
+        self.n, self.bounds = exceptions.validate_args(n, bounds)
+        self.generator = LifeFactory()
 
-    def __init__(self, dims: Tuple[int] = (50, 50), boundary: str = "fixed"):
-        self.dims, self.boundary = exceptions.validate_args(dims, boundary)
-        self.state = self.seed()
-        self.generations = []
-        self.get_new_state = np.vectorize(self.state_transitions)
-        self.run()
+    def __str__(self):
+        return f"{self.n}x{self.n}_{self.bounds}"
 
-    def reset(self):
-        self.__init__(self.dims, self.boundary)
+    def __repr__(self):
+        return f"Life(n={self.n}, bounds={self.bounds})"
 
-    def run(self):
-        """Runs Life until either a steady state is reached, or max frames"""
-        frames = 0
+    def seed(self) -> np.ndarray:
+        """Generates a uniformly distributed binary array"""
+        return np.random.randint(0, 2, (self.n, self.n))
+
+    def animate(self):
+        animation.animate(self.generator(self), f"./examples/{self}")
+
+
+class LifeFactory:
+    MAX_GENERATIONS = 1000
+    RULES = {(1, 2): 1, (1, 3): 1, (0, 3): 1}
+    NEXT_STATE = np.vectorize(lambda x, y: LifeFactory.RULES.get((x, y), 0))
+
+    @staticmethod
+    def __call__(life: Life) -> LifeGenerator:
+        g = LifeFactory.generator(life.seed(), n=life.n, bounds=life.bounds)
+        return [*g]
+
+    @staticmethod
+    def generator(seed: np.ndarray, **kwds) -> LifeGenerator:
+        """Returns a generator which yields until an exit condition is met"""
+        state = seed
+        generations = 0
+        history = [state]
         while True:
-            self.generations.append(self.state)
-            frames += 1
-            self.update()
-            if frames > 3:
-                a, _, b = self.generations[-3:]
-                if np.array_equal(a, b):
-                    self.generations.extend(self.generations[-2:]*20)
-                    print("oscillating state period 2")
-                    break
-            if np.array_equal(self.state, self.generations[-1]):
-                print("steady state")
+            yield state
+            generations += 1
+            neighbors = LifeFactory.neighbors(state, **kwds)
+            state = LifeFactory.NEXT_STATE(state, neighbors)
+            history = history[-2:] + [state]  # only keep the last three states
+            exit_code = LifeFactory.check_exit(history, generations)
+            if exit_code == 2:  # oscillating state, period 2
+                # yields 40 more frames for animation before generator stops
+                yield from (h for _ in range(20) for h in history[-2:])
                 break
-            if frames == 1000:
-                print("reached max frames")
+            elif exit_code in (1, 3):
                 break
-        animation.make_animation(self.generations, self.make_filename())
 
-    # TODO: refactor to pure functions
-    def update(self):
-        """Calculates a new state"""
-        self.state = self.get_new_state(self.state, self.neighbors)
+    @staticmethod
+    def neighbors(state: np.ndarray, **kwds) -> np.ndarray:
+        """
+        Counts the number of neighbors in a 3x3 neighborhood around
+        each cell in the `state` array
+        """
+        padded = LifeFactory.pad(state, **kwds)
+        windows = np.lib.stride_tricks.sliding_window_view(padded, (3, 3))
+        return windows.sum(axis=(2, 3)) - state
 
-    # TODO: add different noise filters for different starting conditions
-    def seed(self):
-        """Sets an initial seed"""
-        n = self.dims[0]
-        s = np.random.binomial(n, 0.5, self.dims)
-        return np.where(np.isin(s, range(n // 2 - int(n*0.05))), 1, 0)
-        # return np.random.randint(0, 2, self.dims)
+    @staticmethod
+    def pad(state: np.ndarray, *, n: int, bounds: str) -> np.ndarray:
+        """
+        Returns `state` array with a border which makes sliding window
+        calculations trivial.
 
-    def state_transitions(self, x: int, y: int) -> int:
-        """Vectorized helper function for whether a cell should live or die"""
-        return Life.RULES.get((x, y), 0)
+        If `bounds` is 'fixed', then `state` is padded with 0s, otherwise,
+        `state` is tiled and sliced such that the right edge is adjacent
+        to the left edge, the top edge is adjacent to the bottom edge,
+        and catty-corners are adjacent.
 
-    def make_filename(self):
-        """Generates a filename for the resulting gif"""
-        x, y = self.dims
-        b = self.boundary
-        g = len(self.generations)
-        return f"./gifs/{x}x{y}_{b}_{g}_frames"
+        Period bounds example:
 
-    @property
-    def game_board(self) -> np.ndarray:
-        """Returns state embedded in a 'frame' for sliding window calcs"""
-        if self.boundary == "fixed":
-            return np.pad(self.state, 1)
+        Let `state` be
+        ```
+        A B C
+        D E F
+        G H I
+        ```
+        Then the periodic boundaries would be
+        ```
+        I G H I G
+        C A B C A
+        F D E F D
+        I G H I G
+        C A B C A
+        ```
+        """
+        if bounds == "fixed":
+            return np.pad(state, 1)
+        return np.tile(state, (3, 3))[(s := n-1):-s, s:-s]
 
-        n = len(self.state) - 1
-        return np.tile(self.state, (3, 3))[n:-n, n:-n]
+    @staticmethod
+    def check_exit(history: List[np.ndarray], generations: int) -> int:
+        """
+        Checks for three exit conditions and returns a corresponding code
 
-    @property
-    def neighbors(self) -> np.ndarray:
-        """Counts number of neighbors for each cell"""
-        # Get number of neighboring live cells
-        windows = sliding_window_view(self.game_board, (3, 3))
-        return windows.sum(axis=(2, 3)) - self.state
-
-
-if __name__ == "__main__":
-    dims, boundary = sys.argv[1:]
-    dims = literal_eval(dims)
-    Life(dims, boundary)
+        Exit codes:
+            `0`: OK
+            `1`: A steady state has been reached
+            `2`: An oscillating state of period 2 has been reached
+            `3`: The maximum number of generations has been reached
+        """
+        exit_code = 0
+        if np.array_equal(*history[-2:]):
+            print("steady state")
+            exit_code = 1
+        if len(history) == 3:
+            a, _, b = history[-3:]
+            if np.array_equal(a, b):
+                print("oscillating state period 2")
+                exit_code = 2
+        if generations == LifeFactory.MAX_GENERATIONS:
+            print("reached max generations")
+            exit_code = 3
+        return exit_code

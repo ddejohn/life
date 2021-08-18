@@ -2,7 +2,7 @@
 
 Conway's game of life with options for fixed or periodic boundary conditions.
 
-<!-- ![](./example.gif) -->
+<!-- ![](./gifs/example.gif) -->
 
 ## Intro
 
