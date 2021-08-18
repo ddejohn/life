@@ -1,3 +1,5 @@
+"""Methods and constants for creating animations"""
+
 # Standard Library
 from typing import List
 from random import choice, sample
@@ -19,7 +21,6 @@ COLORS = [("#ffba08", "#ff8c61"),
           ("#00d59e", "#ab63fa")]
 
 
-@gif.frame
 def make_plot(state: np.ndarray, colors: List[str]) -> go.Figure:
     fig = go.Figure(go.Heatmap(z=state, colorscale=colors))
     fig.update_traces(showscale=False)
@@ -34,9 +35,15 @@ def make_plot(state: np.ndarray, colors: List[str]) -> go.Figure:
     return fig
 
 
-def make_animation(states: np.ndarray, filename: str):
+@gif.frame
+def frame(fig: go.Figure) -> go.Figure:
+    return fig
+
+
+def animate(states: List[np.ndarray], filename: str):
+    print("animating...")
     colors = sample(choice(COLORS), k=2)
     c0, c1 = [c.strip("#") for c in sample(choice(COLORS), k=2)]
-    filename = f"{filename}_{c0}_{c1}.gif"
-    frames = [make_plot(s, colors) for s in states]
-    gif.save(frames, filename, duration=50)
+    frames = [frame(make_plot(s, colors)) for s in states]
+    filename += f"_{c0}_{c1}_{len(frames)}_frames.gif"
+    gif.save(frames, filename, duration=75)
