@@ -1,45 +1,52 @@
 # Standard Library
-from typing import Iterator, List
+from typing import Callable, Iterator, List, Tuple
 
 # Third party
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view as windows
 
 # Local
 import exceptions
 import animation
 
 # Custom types
+ArrayShape = Tuple[int, int]
 LifeGenerator = Iterator[np.ndarray]
+StateArray = Tuple[np.ndarray, np.ndarray]
+
+# Constants
+MAX_GENERATIONS = 1000
+RULES = {(1, 2): 1, (1, 3): 1, (0, 3): 1}
+NEXT_STATE: Callable[[StateArray], np.ndarray]
+NEXT_STATE = np.vectorize(lambda x, y: RULES.get((x, y), 0))
 
 
 class Life:
-    def __init__(self, n: int = 50, bounds: str = "fixed"):
-        self.n, self.bounds = exceptions.validate_args(n, bounds)
-        self.generator = LifeFactory()
+    def __init__(self, shape: ArrayShape = (192, 108), bounds: str = "fixed"):
+        self.shape, self.bounds = exceptions.validate_args(shape, bounds)
+        self.generator = LifeGeneratorFactory()
 
     def __str__(self):
-        return f"{self.n}x{self.n}_{self.bounds}"
+        w, h = self.shape
+        return f"{10*w}x{10*h}_{self.bounds}"
 
     def __repr__(self):
-        return f"Life(n={self.n}, bounds={self.bounds})"
+        return f"Life(shape={self.shape}, bounds={self.bounds})"
 
     def seed(self) -> np.ndarray:
         """Generates a uniformly distributed binary array"""
-        return np.random.randint(0, 2, (self.n, self.n))
+        return np.random.randint(0, 2, self.shape, dtype="uint8")
 
     def animate(self):
-        animation.animate(self.generator(self), f"./examples/{self}")
+        animation.make_animation(self.generator(self), f"./examples/{self}")
 
 
-class LifeFactory:
-    MAX_GENERATIONS = 1000
-    RULES = {(1, 2): 1, (1, 3): 1, (0, 3): 1}
-    NEXT_STATE = np.vectorize(lambda x, y: LifeFactory.RULES.get((x, y), 0))
-
+class LifeGeneratorFactory:
     @staticmethod
     def __call__(life: Life) -> LifeGenerator:
-        g = LifeFactory.generator(life.seed(), n=life.n, bounds=life.bounds)
-        return [*g]
+        mode = "constant" if life.bounds == "fixed" else "wrap"
+        params = dict(seed=life.seed(), mode=mode)
+        return [*LifeGeneratorFactory.generator(**params)]
 
     @staticmethod
     def generator(seed: np.ndarray, **kwds) -> LifeGenerator:
@@ -50,10 +57,10 @@ class LifeFactory:
         while True:
             yield state
             generations += 1
-            neighbors = LifeFactory.neighbors(state, **kwds)
-            state = LifeFactory.NEXT_STATE(state, neighbors)
+            neighbors = LifeGeneratorFactory.neighbors(state, **kwds)
+            state = NEXT_STATE(state, neighbors)
             history = history[-2:] + [state]  # only keep the last three states
-            exit_code = LifeFactory.check_exit(history, generations)
+            exit_code = LifeGeneratorFactory.check_exit(history, generations)
             if exit_code == 2:  # oscillating state, period 2
                 # yields 40 more frames for animation before generator stops
                 yield from (h for _ in range(20) for h in history[-2:])
@@ -62,46 +69,9 @@ class LifeFactory:
                 break
 
     @staticmethod
-    def neighbors(state: np.ndarray, **kwds) -> np.ndarray:
-        """
-        Counts the number of neighbors in a 3x3 neighborhood around
-        each cell in the `state` array
-        """
-        padded = LifeFactory.pad(state, **kwds)
-        windows = np.lib.stride_tricks.sliding_window_view(padded, (3, 3))
-        return windows.sum(axis=(2, 3)) - state
-
-    @staticmethod
-    def pad(state: np.ndarray, *, n: int, bounds: str) -> np.ndarray:
-        """
-        Returns `state` array with a border which makes sliding window
-        calculations trivial.
-
-        If `bounds` is 'fixed', then `state` is padded with 0s, otherwise,
-        `state` is tiled and sliced such that the right edge is adjacent
-        to the left edge, the top edge is adjacent to the bottom edge,
-        and catty-corners are adjacent.
-
-        Period bounds example:
-
-        Let `state` be
-        ```
-        A B C
-        D E F
-        G H I
-        ```
-        Then the periodic boundaries would be
-        ```
-        I G H I G
-        C A B C A
-        F D E F D
-        I G H I G
-        C A B C A
-        ```
-        """
-        if bounds == "fixed":
-            return np.pad(state, 1)
-        return np.tile(state, (3, 3))[(s := n-1):-s, s:-s]
+    def neighbors(x: np.ndarray, mode: str) -> np.ndarray:
+        """Counts living neighbors around each cell in the `x` array"""
+        return windows(np.pad(x, 1, mode=mode), (3, 3)).sum(axis=(2, 3)) - x
 
     @staticmethod
     def check_exit(history: List[np.ndarray], generations: int) -> int:
@@ -123,7 +93,7 @@ class LifeFactory:
             if np.array_equal(a, b):
                 print("oscillating state period 2")
                 exit_code = 2
-        if generations == LifeFactory.MAX_GENERATIONS:
+        if generations == MAX_GENERATIONS:
             print("reached max generations")
             exit_code = 3
         return exit_code
