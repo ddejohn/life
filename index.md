@@ -2,7 +2,7 @@
 
 Conway's game of life with options for fixed or periodic boundary conditions.
 
-![](./gifs/example.gif)
+![](./visualizations/example.gif)
 
 ## Intro
 
@@ -102,23 +102,23 @@ This hefty layer of abstraction allows me to focus on the next piece of the puzz
 
 The rules of the Game of Life entirely revolve around how many living neighbors a given cell has. Typically, a **neighborhood** is considered to be the 8 cells surrounding any given cell:
 
-![](./docs/visualizations/basic_heatmap.png)
+![](./visualizations/basic_heatmap.png)
 
 For cells not on the edge of the array finding the number of neighbors is trivial, just look at each cell in all eight directions and count how many of those cells are alive. The tricky part comes in how to deal with cells on the edge of the array.
 
 There are two variants on what are known as **boundary conditions.** The first is the **fixed** boundary condition wherein all the cells adjacent to those on the edge of the array are considered dead (think of it as a wall of zeros surrounding the entire array):
 
-![](./docs/visualizations/fixed_heatmap.png)
+![](./visualizations/fixed_heatmap.png)
 
 The other is the **periodic** boundary condition which means that each edge of the array essentially "wraps" around to the other side so that, for instance, cells on left edge of the array are considered to be adjacent to the cells on the right edge:
 
-![](./docs/visualizations/periodic_heatmap.png)
+![](./visualizations/periodic_heatmap.png)
 
 ### Finding `neighbors`
 
 Now, you could write a nested `for` loop over the `r, c` (row, column) coordinates of each neighbor of a given cell,
 
-![](./docs/visualizations/neighbors_indexing.png)
+![](./visualizations/neighbors_indexing.png)
 
 But that in and of itself is a nightmare, let alone having to deal with the boundary conditions. Instead, we'll "pad" the `state` array with a 1-cell-wide border and use a \((3 \times 3)\) sliding window!
 
@@ -170,7 +170,7 @@ windows = np.lib.stride_tricks.sliding_window_view(padded, (3, 3))
 
 Here, `LifeFactory.pad()` is a static method of the `LifeFactory` factory class which takes `state` and pads it with either a border of zeros for a fixed-boundary game (original `state` outlined in pink):
 
-![](./docs/visualizations/fixed_boundary_padded_heatmap.png)
+![](./visualizations/fixed_boundary_padded_heatmap.png)
 
 Or, the `.pad()` function returns the original `state` with periodic boundaries, which I'll cover in the following section. For now, let's focus on that ridiculously long function name being called for the assignment to `windows`.
 
@@ -180,7 +180,7 @@ The `np.lib.stride_tricks.sliding_window_view()` function provides a sequence of
 
 For example, if you have a `state` array which is `(4, 4)`, *then the sliding window function returns a* `(4, 4)` *array of* `(3, 3)` *arrays.* See where I'm going with this? Essentially, you get a `(4, 4)` array of each of the original array's `(3, 3)` neighborhood! Here's an example with a `state` array of dimensions `(3, 3)` and using fixed dimensions. Here, the original array is outlined in pink.
 
-![](./docs/visualizations/fixed_sliding_window_animation.gif)
+![](./visualizations/fixed_sliding_window_animation.gif)
 
 ### Counting neighbors
 
@@ -357,7 +357,7 @@ As you can see, we've simply repeated `x` array with shape `(2, 3)` in a `(4, 2)
 
 Let's return to binary arrays and look at an example of a `(5, 5)` instance of `Life` (with the original `(5, 5)` array outlined in pink):
 
-![](./docs/visualizations/tiled_heatmap.png)
+![](./visualizations/tiled_heatmap.png)
 
 Now we take a slice of the array such that we capture both the original `state` and its periodic border:
 
@@ -367,7 +367,7 @@ np.tile(state, (3, 3))[(s := n-1):-s, s:-s]
 
 Here `s` is the size of the `state` array minus 1. Here's what the slice looks like (outlined in yellow):
 
-![](./docs/visualizations/tiled_and_sliced_heatmap.png)
+![](./visualizations/tiled_and_sliced_heatmap.png)
 
 This tiled and sliced array is now the `padded` array on which we can perform the sliding window view function, count neighbors, and update `state`.
 
