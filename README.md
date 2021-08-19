@@ -92,7 +92,7 @@ The easiest place to start is in encoding the rules of Life. The three state tra
 RULES = {(1, 2): 1, (1, 3): 1, (0, 3): 1}
 ```
 
-Choosing this particular data structure meant I needed to write a function which could accept a 2-tuple of the elements from two arrays: the `state` array and the `neighbors` array. For this, I use `np.vectorize()`:
+Choosing this particular data structure meant I needed to write a function which could accept a 2-tuple of the elements from two arrays: the `state` array and the `neighbors` array. For this, I used `np.vectorize()`:
 
 ```python
 NEXT_STATE = np.vectorize(lambda x, y: LifeFactory.RULES.get((x, y), 0))
@@ -100,7 +100,7 @@ NEXT_STATE = np.vectorize(lambda x, y: LifeFactory.RULES.get((x, y), 0))
 
 Here, I'm passing an anonymous function which takes two arguments, `x` and `y`, each representing a single element at the same position in `state` and `neighbors` respectively. The `np.vectorize()` function returns a `Callable[[np.ndarray, np.ndarray], np.ndarray]` which is assigned to `NEXT_STATE`.
 
-The `NEXT_STATE` function now takes the `state` and `neighbors` arrays as arguments and constructs a new array by getting values based on the `RULES` dictionary lookup. In other words, in order to get the next **generation**, I just need to call `NEXT_STATE(state, neighbors)`.
+The `NEXT_STATE()` function now takes the `state` and `neighbors` arrays as arguments and constructs a new array by getting values based on the `RULES` dictionary lookup. In other words, in order to get the next **generation**, I just need to call `NEXT_STATE(state, neighbors)`.
 
 This hefty layer of abstraction allows me to focus on the next piece of the puzzle: calculating each cell's number of living neighbors.
 
@@ -335,9 +335,49 @@ In retrospect, the logic behind padding `state` with a periodic boundary border 
 
 For a while I couldn't really wrap my mind around what to do with the corners of each array, but then it dawned on me: caddy-corner cells *must* be adjacent! The way I figured this out was by fiddling with the `np.tile()` function, which takes as input an array `x`, and a desired shape, and *tiles* `x` in a repeating pattern such that it fills out an array of shape `(n*p, m*q)` where `(n, m)` is the shape of `x` and `(p, q)` is the desired shape passed as an argument to `np.tile()`.
 
-Let's take a look at an example:
+Let's take a look at an example. It'll be easier to see what `np.tile()` is doing with a non-binary array:
 
+```python
+>>> x = np.array([[1, 2, 3], [4, 5, 6]])
+>>> x
+array([[1, 2, 3],
+       [4, 5, 6]])
+>>> pattern = (4, 2)
+>>> tiles = np.tile(x, pattern)
+>>> tiles
+array([[1, 2, 3, 1, 2, 3],
+       [4, 5, 6, 4, 5, 6],
+       [1, 2, 3, 1, 2, 3],
+       [4, 5, 6, 4, 5, 6],
+       [1, 2, 3, 1, 2, 3],
+       [4, 5, 6, 4, 5, 6],
+       [1, 2, 3, 1, 2, 3],
+       [4, 5, 6, 4, 5, 6]])
+>>> print(x.shape); print(pattern); print(tiles.shape)
+(2, 3)
+(4, 2)
+(8, 6)
+```
 
+As you can see, we've simply repeated `x` array with shape `(2, 3)` in a `(4, 2)` pattern (two copies of `x` repeating horizontally, and four copies repeating vertically), resulting in an `(8, 6)` array.
+
+Let's return to binary arrays and look at an example of a `(5, 5)` instance of `Life` (with the original `(5, 5)` array outlined in pink):
+
+![](./docs/visualizations/tiled_heatmap.png)
+
+Now we take a slice of the array such that we capture both the original `state` and its periodic border:
+
+```python
+np.tile(state, (3, 3))[(s := n-1):-s, s:-s]
+```
+
+Here `s` is the size of the `state` array minus 1. Here's what the slice looks like (outlined in yellow):
+
+![](./docs/visualizations/tiled_and_sliced_heatmap.png)
+
+This tiled and sliced array is now the `padded` array on which we can perform the sliding window view function, count neighbors, and update `state`.
+
+And there you have it, my NumPy-oriented implementation of Conway's Game of Life.
 
 ## Planned features
 
