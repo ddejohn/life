@@ -403,7 +403,3 @@ Here `s` is the size of the `state` array minus 1. Here's what the slice looks l
 This tiled and sliced array is now the `padded` array on which we can perform the sliding window view function, count neighbors, and update `state`.
 
 And there you have it, my NumPy-oriented implementation of Conway's Game of Life.
-
-## Planned features
-
-A modal in which a user may draw an initial state.
