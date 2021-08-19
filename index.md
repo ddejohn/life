@@ -8,9 +8,9 @@ Conway's game of life with options for fixed or periodic boundary conditions.
 
 I had always been very intrigued by [Conway's Game of Life](https://en.m.wikipedia.org/wiki/Conway%27s_Game_of_Life) but had never actually implemented it myself. When I looked up the ruleset, I realized I had no excuse.
 
-For those unfamiliar, Conway's Game of Life is what is known as a [cellular automaton](https://en.m.wikipedia.org/wiki/Cellular_automaton). The Game of Life is a 2-dimensional array of cells which observe a binary state: either on or off, alive or dead. Going forward I'll be referring to this collection of cells as the **cells** and the overall state of the cells at any given time as **state**.
+For those unfamiliar, Conway's Game of Life is what is known as a [cellular automaton](https://en.m.wikipedia.org/wiki/Cellular_automaton). The Game of Life is a 2-dimensional array of cells which observe a binary state: either on or off, alive or dead. Going forward I'll be referring to this collection of cells as **cells** and the overall state of the cells at any given time as **state**.
 
-The state of the cells at time `t` is entirely determined by the state of the board at time `t - 1`, and is governed by this ruleset:
+The state at time `t` is entirely determined by the state at time `t - 1`, and is governed by this simple ruleset:
 
 1. **Underpopulation:** a live cell with zero or one live neighbors dies
 2. **Survival:** a live cell with two or three neighbors survives
