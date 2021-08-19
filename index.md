@@ -37,7 +37,7 @@ The basic algorithm for implementing Life is as follows:
 
 Each cell's neighborhood consists of the eight cells adjacent to it (up, down, left, right, and the diagonals).
 
-## Each cell is a finite automata!
+## Each cell is a finite automaton!
 
 The word **state** in this section will specifically refer only to the state of an individual cell.
 
