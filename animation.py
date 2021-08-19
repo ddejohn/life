@@ -23,6 +23,11 @@ COLORS = [("#155b92", "#15925e"),
           ("#00d59e", "#ab63fa")]
 
 
+@gif.frame
+def animation_frame(fig: go.Figure) -> go.Figure:
+    return fig
+
+
 def make_plot(state: np.ndarray, colors: List[str]) -> go.Figure:
     height, width = state.shape
     fig = go.Figure(go.Heatmap(z=state, colorscale=colors))
@@ -32,11 +37,6 @@ def make_plot(state: np.ndarray, colors: List[str]) -> go.Figure:
                       xaxis_visible=False,
                       yaxis_visible=False,
                       margin=dict(t=0, b=0, l=0, r=0))
-    return fig
-
-
-@gif.frame
-def animation_frame(fig: go.Figure) -> go.Figure:
     return fig
 
 
