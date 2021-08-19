@@ -24,7 +24,7 @@ COLORS = [("#155b92", "#15925e"),
 
 
 def make_plot(state: np.ndarray, colors: List[str]) -> go.Figure:
-    width, height = state.shape
+    height, width = state.shape
     fig = go.Figure(go.Heatmap(z=state, colorscale=colors))
     fig.update_traces(showscale=False)
     fig.update_layout(width=10*width,

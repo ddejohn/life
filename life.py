@@ -22,13 +22,13 @@ NEXT_STATE = np.vectorize(lambda x, y: RULES.get((x, y), 0))
 
 
 class Life:
-    def __init__(self, shape: ArrayShape = (192, 108), bounds: str = "fixed"):
+    def __init__(self, shape: ArrayShape = (108, 192), bounds: str = "fixed"):
         self.shape, self.bounds = exceptions.validate_args(shape, bounds)
         self.generator = LifeGeneratorFactory()
 
     def __str__(self):
-        w, h = self.shape
-        return f"{10*w}x{10*h}_{self.bounds}"
+        height, width = self.shape
+        return f"{10*width}x{10*height}_{self.bounds}"
 
     def __repr__(self):
         return f"Life(shape={self.shape}, bounds={self.bounds})"
@@ -59,7 +59,7 @@ class LifeGeneratorFactory:
             generations += 1
             neighbors = LifeGeneratorFactory.neighbors(state, **kwds)
             state = NEXT_STATE(state, neighbors)
-            history = history[-2:] + [state]  # only keep the last three states
+            history = [*history[-2:], state]  # only keep the last three states
             exit_code = LifeGeneratorFactory.check_exit(history, generations)
             if exit_code == 2:  # oscillating state, period 2
                 # yields 40 more frames for animation before generator stops
