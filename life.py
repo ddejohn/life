@@ -93,10 +93,10 @@ class StateGenerator:
         Checks for three exit conditions and returns a corresponding code
 
         Exit codes:
+            `0`: The maximum number of generations has been reached
             `1`: OK to continue
             `2`: A steady state has been reached
             `2`: An oscillating state of period 2 has been reached
-            `0`: The maximum number of generations has been reached
         """
         exit_code = 1
         if np.array_equal(*history[-2:]):
