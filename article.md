@@ -10,7 +10,7 @@ I had always been very intrigued by [Conway's Game of Life](https://en.m.wikiped
 
 For those unfamiliar, Conway's Game of Life is what is known as a [cellular automaton](https://en.m.wikipedia.org/wiki/Cellular_automaton). The Game of Life is a 2-dimensional array of cells which observe a binary state: either on or off, alive or dead. Going forward I'll be referring to this collection of cells as **cells** and the overall state of the cells at any given time as **state**.
 
-The state at time `t` is entirely determined by the state at time `t - 1`, and is governed by this simple ruleset:
+The state at time `t` is entirely determined by the state at time `t - 1`, and is governed by this simple rule set:
 
 1. **Underpopulation:** a live cell with zero or one live neighbors dies
 2. **Survival:** a live cell with two or three neighbors survives
@@ -86,7 +86,9 @@ Every other possible state (again, a 2-tuple `(alive or dead, number of neighbor
 
 ## Implementation
 
-Conventionally, most implementations take a looping approach where each cell is checked one-by-one. I decided to take advantage of NumPy's vectorization to simplify the calculations with the tradeoff being that the initial set up was a little bit more complicated to figure out. It may help to have `life.py` open somewhere to which you can refer during the following sections, however the relevant code will also be shown.
+Conventionally, one might take a looping approach where each cell is checked and updated individually, cell-by-cell. This approach has several pitfalls: manual indexing, and the necessity for manually updating a new array (you can't update any of the cells until you've checked all of them and have determined their next state, since updating one cell could potentially change the number of neighbors of the next cell).
+
+I decided to take advantage of NumPy to simplify the calculations with the tradeoff being that the initial set up was a little bit more complicated to figure out. It may help to have `life.py` open somewhere to which you can refer during the following sections, however the relevant code will also be shown.
 
 ### Encoding the rules
 
@@ -99,8 +101,16 @@ RULES = {(1, 2): 1, (1, 3): 1, (0, 3): 1}
 Choosing this particular data structure meant I needed to write a function which could accept a 2-tuple of the elements from two arrays: the `state` array and the `neighbors` array. For this, I used `np.vectorize()`:
 
 ```python
-NEXT_STATE = np.vectorize(lambda x, y: LifeFactory.RULES.get((x, y), 0))
+# Relevant type aliases
+StateArray = Tuple[np.ndarray, np.ndarray]
+StateUpdater = Callable[[StateArray], np.ndarray]
+
+NEXT_STATE: StateUpdater = np.vectorize(lambda x, y: RULES.get((x, y), 0))
 ```
+
+Let's focus on the type hints in order to break down how the `NEXT_STATE()` function works: the `StateArray` type is an alias for `Tuple[np.ndarray, np.ndarray]`, or a 2-tuple of NumPy arrays, and the `StateUpdater` type is a `Callable` (Python's type hint for functions) which takes as its input a `StateArray` and returns a NumPy array. In other words, `NEXT_STATE()` is a closed binary operation on 2D NumPy arrays of `dtype="uint8"`.
+
+The implementation details of `np.vectorize()` are outside the scope of this article. The takeaway is that it will always return a new function of the type `Callable[[np.ndarray, ...], np.ndarray]`.
 
 Here, I'm passing an anonymous function which takes two arguments, `x` and `y`, each representing a single element at the same position in `state` and `neighbors` respectively. The `np.vectorize()` function returns a `Callable[[np.ndarray, np.ndarray], np.ndarray]` which is assigned to `NEXT_STATE`.
 

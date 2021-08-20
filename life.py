@@ -1,6 +1,6 @@
 # Standard Library
 import random
-from typing import Callable, Iterator, List, Tuple
+from typing import Iterator, List, Tuple
 
 # Third party
 import numpy as np
@@ -10,16 +10,13 @@ from numpy.lib.stride_tricks import sliding_window_view as windows
 import exceptions
 import animation
 
-# Custom types
+# Type aliases
+LifeArray = np.ndarray
 ArrayShape = Tuple[int, int]
-Generations = List[np.ndarray]
-StateArray = Tuple[np.ndarray, np.ndarray]
+Generations = List[LifeArray]
 
 # Constants
 MAX_GENERATIONS = 1000
-RULES = {(1, 2): 1, (1, 3): 1, (0, 3): 1}
-NEXT_STATE: Callable[[StateArray], np.ndarray]
-NEXT_STATE = np.vectorize(lambda x, y: RULES.get((x, y), 0))
 
 
 class Life:
@@ -64,31 +61,36 @@ class StateGenerator:
         return next(self.state_generator)
 
     @staticmethod
-    def generator(life: Life) -> Iterator[np.ndarray]:
+    def generator(life: Life) -> Iterator[LifeArray]:
         state = next(life.seed_generator)
-        generations = 0
+        num_generations = 0
         history = [state]
         while True:
             yield state
-            generations += 1
+            num_generations += 1
             neighbors = StateGenerator.neighbors(state, life.bounds)
-            state = NEXT_STATE(state, neighbors)
+            state = StateGenerator.update(state, neighbors)
             history = [*history[-2:], state]  # only keep the last three states
-            exit_code = StateGenerator.check_exit(history, generations)
+            exit_code = StateGenerator.check_exit(history, num_generations)
             if exit_code == 2:
-                # yields 40 more frames for animation before generator stops
-                yield from (h for _ in range(20) for h in history[-2:])
+                # yields 30 more frames for animation before generator stops
+                yield from (h for _ in range(15) for h in history[-2:])
                 break
             elif exit_code == 0:
                 break
 
     @staticmethod
-    def neighbors(x: np.ndarray, mode: str) -> np.ndarray:
+    def update(s: LifeArray, n: LifeArray) -> LifeArray:
+        """Calculates the next generation given state `s` and neighbors `n`"""
+        return (n < 4) * (1 - s * (n % 2 - 1) + n) // 4
+
+    @staticmethod
+    def neighbors(x: LifeArray, mode: str) -> LifeArray:
         """Counts living neighbors around each cell in the `x` array"""
         return windows(np.pad(x, 1, mode=mode), (3, 3)).sum(axis=(2, 3)) - x
 
     @staticmethod
-    def check_exit(history: List[np.ndarray], generations: int) -> int:
+    def check_exit(history: Generations, num_generations: int) -> int:
         """
         Checks for three exit conditions and returns a corresponding code
 
@@ -107,7 +109,7 @@ class StateGenerator:
             if np.array_equal(a, b):
                 print("oscillating state period 2")
                 exit_code = 2
-        if generations == MAX_GENERATIONS:
+        if num_generations == MAX_GENERATIONS:
             print("reached max generations")
             exit_code = 0
         return exit_code
@@ -116,7 +118,7 @@ class StateGenerator:
 class SeedArray:
     """Static methods for generating random binary tiles"""
     @staticmethod
-    def __call__(shape: ArrayShape, pattern_type: str) -> np.ndarray:
+    def __call__(shape: ArrayShape, pattern_type: str) -> LifeArray:
         rotator = random.choice((np.fliplr, np.flipud, np.rot90, None))
         if pattern_type == "tiles":
             array_creator = random.choice((SeedArray.diagonal,
@@ -131,23 +133,23 @@ class SeedArray:
         return array
 
     @staticmethod
-    def binary_array(shape: tuple) -> np.ndarray:
+    def binary_array(shape: tuple) -> LifeArray:
         """Binary noise array, the base working unit for the other methods"""
         return np.random.randint(0, 2, shape, dtype="uint8")
 
     @staticmethod
-    def quilt(shape: tuple) -> np.ndarray:
+    def quilt(shape: tuple) -> LifeArray:
         """A base triangular array"""
         return np.triu(SeedArray.binary_array(shape))
 
     @staticmethod
-    def diagonal(shape: tuple) -> np.ndarray:
+    def diagonal(shape: tuple) -> LifeArray:
         """Diagonally symmetric array"""
         tri = SeedArray.quilt(shape)
         return np.clip(tri + tri.T, 0, 1)
 
     @staticmethod
-    def inverted_diagonal(shape: tuple) -> np.ndarray:
+    def inverted_diagonal(shape: tuple) -> LifeArray:
         """Diagonally symmetric array with flipped bits in lower triangular"""
         tri = SeedArray.quilt(shape)
         return np.triu(np.where(tri, 0, 1)).T + tri
@@ -156,7 +158,7 @@ class SeedArray:
 class TileMethod:
     """Static methods for tiling an array with different symmetries"""
     @staticmethod
-    def __call__(array: np.ndarray, pattern_number: int) -> np.ndarray:
+    def __call__(array: LifeArray, pattern_number: int) -> LifeArray:
         tiling_method = random.choice((TileMethod.four_corners,
                                        TileMethod.book_match,
                                        TileMethod.hamburger,
@@ -164,7 +166,7 @@ class TileMethod:
         return np.tile(tiling_method(array), (pattern_number,)*2)
 
     @staticmethod
-    def four_corners(NW: np.ndarray) -> np.ndarray:
+    def four_corners(NW: LifeArray) -> LifeArray:
         """Radial symmetry"""
         NE = np.fliplr(NW)
         SW = np.flipud(NW)
@@ -172,19 +174,19 @@ class TileMethod:
         return np.block([[NW, NE], [SW, SE]])
 
     @staticmethod
-    def book_match(L: np.ndarray) -> np.ndarray:
+    def book_match(L: LifeArray) -> LifeArray:
         """Vertical symmetry"""
         R = np.fliplr(L)
         return np.block([[L, R], [L, R]])
 
     @staticmethod
-    def hamburger(T: np.ndarray) -> np.ndarray:
+    def hamburger(T: LifeArray) -> LifeArray:
         """Horizontal symmetry"""
         B = np.flipud(T)
         return np.block([[T, T], [B, B]])
 
     @staticmethod
-    def repeat(x: np.ndarray) -> np.ndarray:
+    def repeat(x: LifeArray) -> LifeArray:
         """Repeating tiles"""
         return np.tile(x, (2, 2))
 
@@ -216,10 +218,10 @@ class SeedGenerator:
     def __iter__(self):
         return self
 
-    def __next__(self) -> np.ndarray:
+    def __next__(self) -> LifeArray:
         return next(self.seed_generator)
 
-    def generator(self, life: Life) -> Iterator[np.ndarray]:
+    def generator(self, life: Life) -> Iterator[LifeArray]:
         while True:
             array_creator = SeedArray()
             tiling_method = TileMethod()
