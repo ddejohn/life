@@ -136,21 +136,21 @@ class SeedArray:
         return np.random.randint(0, 2, shape, dtype="uint8")
 
     @staticmethod
+    def quilt(shape: tuple) -> np.ndarray:
+        """A base triangular array"""
+        return np.triu(SeedArray.binary_array(shape))
+
+    @staticmethod
     def diagonal(shape: tuple) -> np.ndarray:
         """Diagonally symmetric array"""
-        tri = np.triu(SeedArray.binary_array(shape))
+        tri = SeedArray.quilt(shape)
         return np.clip(tri + tri.T, 0, 1)
 
     @staticmethod
     def inverted_diagonal(shape: tuple) -> np.ndarray:
         """Diagonally symmetric array with flipped bits in lower triangular"""
-        tri = np.triu(SeedArray.binary_array(shape))
+        tri = SeedArray.quilt(shape)
         return np.triu(np.where(tri, 0, 1)).T + tri
-
-    @staticmethod
-    def quilt(shape: tuple) -> np.ndarray:
-        """A triangular array"""
-        return np.triu(SeedArray.binary_array(shape))
 
 
 class TileMethod:
