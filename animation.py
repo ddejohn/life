@@ -40,6 +40,5 @@ def make_animation(states: List[np.ndarray], filename: str):
     print("animating...")
     colors = sample(choice(COLORS), k=2)
     frames = [animation_frame(make_plot(s, colors)) for s in states]
-    filename += "_" + "_".join(c.strip("#") for c in colors)
     filename += f"_{len(frames)}_frames.gif"
     gif.save(frames, filename, duration=75)
