@@ -2,7 +2,7 @@
 
 A NumPy-oriented implementation of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway's_Game_of_Life) with options for fixed or periodic boundary conditions.
 
-![](./docs/visualizations/1920x1080_fixed_ff928b_b392ac_1000_frames.gif)
+![](./visualizations/1920x1080_fixed_ff928b_b392ac_1000_frames.gif)
 
 ## Intro
 
@@ -35,7 +35,7 @@ The basic algorithm for implementing Life is as follows:
 
 Each cell's **neighborhood** consists of the eight cells adjacent to it (up, down, left, right, and the diagonals). Here's a cell outlined in yellow and its eight neighbors and their statuses:
 
-<p align="center"><img src="./docs/visualizations/neighbors_alive_dead.png"></p>
+<p align="center"><img src="./visualizations/neighbors_alive_dead.png"></p>
 
 ## Each cell is a finite automaton!
 
@@ -120,25 +120,25 @@ Unfortunately, `np.vectorize()` is a only convenience method and doesn't truly t
 
 The rules of the Game of Life entirely revolve around how many living neighbors a given cell has. Typically, a **neighborhood** is considered to be the 8 cells surrounding any given cell. For cells not on the edge of the array finding the number of neighbors is trivial, just look at each adjacent cell in all eight directions and count how many of those cells are alive. In the following visualizations, each cell will be annotated with either a 1 or a 0, indicating whether that cell is alive or dead, respectively. Here is an example cell outlined in yellow, and its neighborhood outlined in pink:
 
-<p align="center"><img src="./docs/visualizations/basic_heatmap.png"></p>
+<p align="center"><img src="./visualizations/basic_heatmap.png"></p>
 
 The tricky part comes in how to deal with cells on the edge of the array. These are what are known as **boundary conditions** and there are two variants: the first is the **fixed** boundary condition wherein all the cells adjacent to those on the edge of the array are considered dead (think of it as a wall of zeros surrounding the entire array, which is outlined in turquoise):
 
-<p align="center"><img src="./docs/visualizations/fixed_heatmap.png"></p>
+<p align="center"><img src="./visualizations/fixed_heatmap.png"></p>
 
 The other is the **periodic** boundary condition which means that each edge of the array essentially "wraps" around to the other side so that, for instance, cells on left edge of the array are considered to be adjacent to the cells on the right edge:
 
-<p align="center"><img src="./docs/visualizations/periodic_heatmap.png"></p>
+<p align="center"><img src="./visualizations/periodic_heatmap.png"></p>
 
 ### Finding `neighbors`
 
 Now, you could write a nested `for` loop over the `r, c` (row, column) coordinates of each neighbor of a given cell:
 
-<p align="center"><img src="./docs/visualizations/neighbors_indexing.png"></p>
+<p align="center"><img src="./visualizations/neighbors_indexing.png"></p>
 
 But that in and of itself is a nightmare, let alone having to deal with the boundary conditions. Here's what one corner's neighbors look like with periodic boundary conditions:
 
-<p align="center"><img src="./docs/visualizations/periodic_indexing_nightmare.png"></p>
+<p align="center"><img src="./visualizations/periodic_indexing_nightmare.png"></p>
 
 No thanks! Instead, we'll "pad" the `state` array with a 1-cell-wide border and use a `(3, 3)` sliding window!
 
@@ -183,11 +183,11 @@ Moving down one row from `19` takes three bytes; one byte to reach `18`, one byt
 
 ### Sliding windows
 
-The `np.lib.stride_tricks.sliding_window_view()` function provides a sequence of views of the input array via striding. The implementation details aren't super important, the real key here is that this function returns an array of a very special shape: `(n, n, 3, 3)` where `n` is the original size of the array (I've restricted my implementation to square arrays for a couple reasons I'll talk about in the next article; in general, for an original array of size `(n, m)`, after padding, the sliding window views will be a `(n, m, p, q)` array, where `(p, q)` is the shape of the sliding window you want, assuming that the window shape and the original array shape [work well](https://numpy.org/devdocs/reference/generated/numpy.lib.stride_tricks.sliding_window_view.html#numpy-lib-stride-tricks-sliding-window-view) together).
+The `np.lib.stride_tricks.sliding_window_view()` function provides a sequence of views of the input array via striding. The implementation details aren't super important, the real key here is that this function returns an array of a very special shape: `(n, n, 3, 3)` where `n` is the original size of the array (I've restricted my implementation to square arrays for a couple reasons I'll talk about in the next article; in general, for an original array of size `(n, m)`, after padding, the sliding window views will be a `(n, m, p, q)` array, where `(p, q)` is the shape of the sliding window you want, assuming that the window shape and the original array shape [work well](https://numpy.org/devreference/generated/numpy.lib.stride_tricks.sliding_window_view.html#numpy-lib-stride-tricks-sliding-window-view) together).
 
 For example, if you have a `state` array which is `(3, 3)` then after padding with a fixed or periodic border of one cell, the sliding window function returns a `(3, 3)` array of `(3, 3)` arrays! See where I'm going with this?
 
-<p align="center"><img src="./docs/visualizations/fixed_sliding_window_animation.gif"></p>
+<p align="center"><img src="./visualizations/fixed_sliding_window_animation.gif"></p>
 
 In the example gif above, the original `state` array of shape `(3, 3)` is outlined in pink on the left. Each cell in the original array is outlined in yellow. The sliding blue window is an animated depiction of iterating through each `(3, 3)` neighborhood of the corresponding cell outlined in yellow. The subarrays on the right are the individual `(3, 3)` neighborhood views produced by the `np.lib.stride_tricks.sliding_window_view()` function, conveniently arranged into a 3x3 shape!
 
@@ -381,7 +381,7 @@ As you can see, we've simply repeated `x` array with shape `(2, 3)` in a `(4, 2)
 
 Let's return to binary arrays and look at an example of a `(5, 5)` instance of `Life` (with the original `(5, 5)` array outlined in pink):
 
-<p align="center"><img src="./docs/visualizations/tiled_heatmap.png"></p>
+<p align="center"><img src="./visualizations/tiled_heatmap.png"></p>
 
 Now we take a slice of the array such that we capture both the original `state` and its periodic border:
 
@@ -391,7 +391,7 @@ np.tile(state, (3, 3))[(s := n-1):-s, s:-s]
 
 Here `s` is the size of the `state` array minus 1. Here's what the slice looks like (outlined in yellow):
 
-<p align="center"><img src="./docs/visualizations/tiled_and_sliced_heatmap.png"></p>
+<p align="center"><img src="./visualizations/tiled_and_sliced_heatmap.png"></p>
 
 This tiled and sliced array is now the `padded` array on which we can perform the sliding window view function, count neighbors, and update `state`.
 
@@ -423,6 +423,6 @@ That test was run on a `(1000, 1000)` array, which is *much* larger than my prog
 
 I'll write another post about how I decided to deal with seed generation. Originally, the seeds were just monolithic tiles of uniformly distributed binary noise and while they're interesting in their own right, they can also become quite mundane after a couple dozen runs of Life, so I set out (again with trusty NumPy by my side) to come up with more options for random seed generation. Here are a few examples:
 
-<p align="center"><img src="./docs/visualizations/120x120_symmetries.gif"></p>
+<p align="center"><img src="./visualizations/120x120_symmetries.gif"></p>
 
 Thanks for reading!
