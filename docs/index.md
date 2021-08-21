@@ -108,17 +108,15 @@ StateUpdater = Callable[[StateArray], np.ndarray]
 NEXT_STATE: StateUpdater = np.vectorize(lambda x, y: RULES.get((x, y), 0))
 ```
 
-Let's focus on the type hints in order to break down how the `NEXT_STATE()` function works: the `StateArray` type is an alias for `Tuple[np.ndarray, np.ndarray]`, or a 2-tuple of NumPy arrays, and the `StateUpdater` type is a `Callable` (Python's type hint for functions) which takes as its input a `StateArray` and returns a NumPy array. In other words, `NEXT_STATE()` is a closed binary operation on 2D NumPy arrays of `dtype="uint8"`.
+Let's focus on the type hints in order to break down how the `NEXT_STATE()` function works: the `StateArray` type is an alias for `Tuple[np.ndarray, np.ndarray]`, or a 2-tuple of NumPy arrays, and the `StateUpdater` type is a `Callable` (Python's type hint for functions) which takes as its input a `StateArray` and returns a NumPy array. In other words, the `np.vectorize()` function returns a new function of the type `StateUpdater` and is assigned to `NEXT_STATE()`.
 
-The implementation details of `np.vectorize()` are outside the scope of this article. The takeaway is that `np.vectorize()` will *return a new function* of the type `Callable[[np.ndarray, ...], np.ndarray]`.
+The `NEXT_STATE()` function now takes the `state` and `neighbors` arrays as arguments and constructs a new array by getting values based on the `RULES` dictionary lookup. This means that `NEXT_STATE()` is a closed binary operation on 2D NumPy arrays of the same shape and all we need to do in order to get the next **generation** of Life is call `NEXT_STATE(state, neighbors)`.
 
-The `NEXT_STATE()` function now takes the `state` and `neighbors` arrays as arguments and constructs a new array by getting values based on the `RULES` dictionary lookup. In other words, in order to get the next **generation**, I just need to call `NEXT_STATE(state, neighbors)`.
-
-Unfortunately, `np.vectorize()` is a only convenience method and doesn't truly take advantage of SIMD as far as I can tell, so this particular technique is actually going to end up being a slight bottleneck. We'll come back to this later but for now, this hefty layer of abstraction allows us to focus on the next piece of the puzzle: calculating each cell's number of living neighbors.
+Unfortunately, `np.vectorize()` is a only convenience method and doesn't truly take advantage of [SIMD](https://en.wikipedia.org/wiki/SIMD) as far as I can tell, so this particular technique is actually going to end up being a pretty significant bottleneck! We'll come back to it later but for now, this hefty layer of abstraction allows us to focus on the next piece of the puzzle: calculating each cell's number of living neighbors.
 
 ### Neighborhoods and boundary conditions
 
-The rules of the Game of Life entirely revolve around how many living neighbors a given cell has. Typically, a **neighborhood** is considered to be the 8 cells surrounding any given cell. For cells not on the edge of the array finding the number of neighbors is trivial, just look at each adjacent cell in all eight directions and count how many of those cells are alive. In the following visualizations, each cell will be annotated with either a 1 or a 0, indicating whether that cell is alive or dead, respectively. Here is an example cell outlined in yellow, and its neighborhood outlined in pink:
+The rules of the Game of Life entirely revolve around how many living neighbors a given cell has. Typically, a **neighborhood** is considered to be the 8 cells surrounding any given cell. For cells not on the edge of the array finding the number of neighbors is trivial: simply look at each adjacent cell in all eight directions and count how many of those cells are alive. In the following visualizations, each cell will be annotated with either a 1 or a 0, indicating whether that cell is alive or dead, respectively. Here is an example cell outlined in yellow, and its neighborhood outlined in pink:
 
 <p align="center"><img src="./visualizations/basic_heatmap.png"></p>
 
