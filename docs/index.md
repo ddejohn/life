@@ -395,7 +395,7 @@ Here `s` is the size of the `state` array minus 1. Here's what the slice looks l
 
 This tiled and sliced array is now the `padded` array on which we can perform the sliding window view function, count neighbors, and update `state`.
 
-Of course, I soon realized all of this was moot; there's actually a mode parameter for the `np.pad()` function which does all this heavy lifting for you... Oh well, it was a nice exercise.
+Of course, I soon realized all of this was unnecessary as there's actually a `mode` parameter for the `np.pad()` function which does all this heavy lifting for you... Oh well, it was a nice exercise.
 
 ## Fixing the bottleneck
 
@@ -426,3 +426,9 @@ I'll write another post about how I decided to deal with seed generation. Origin
 <p align="center"><img width="700" src="./visualizations/120x120_symmetries.gif"></p>
 
 Thanks for reading!
+
+Just kidding, here's an example of Life running on one of these symmetric seeds:
+
+<p align="center"><img width="700" src="./visualizations/100x100_constant_tiles_858_frames.gif"></p>
+
+Okay, thanks for sticking around!
