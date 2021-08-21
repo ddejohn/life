@@ -423,6 +423,6 @@ That test was run on a `(1000, 1000)` array, which is *much* larger than my prog
 
 I'll write another post about how I decided to deal with seed generation. Originally, the seeds were just monolithic tiles of uniformly distributed binary noise and while they're interesting in their own right, they can also become quite mundane after a couple dozen runs of Life, so I set out (again with trusty NumPy by my side) to come up with more options for random seed generation. Here are a few examples:
 
-<p align="center"><img src="./visualizations/120x120_symmetries.gif"></p>
+<p align="center"><img width="700" src="./visualizations/120x120_symmetries.gif"></p>
 
 Thanks for reading!
