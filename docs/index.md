@@ -168,7 +168,7 @@ For a 1D array, this is telling us that in order to "travel" to the next element
 >>> (3, 1)
 ```
 
-This is telling us that in order to travel to the next *row* we need to increment our pointer by three bytes. Columnar jumps still only require one byte because data in NumPy is stored in column-order by default (and one byte specifically in this case because I'm using `dtype="uint8"`). Take this array for example:
+This is telling us that in order to travel to the next *row* we need to increment our pointer by three bytes. Columnar jumps still only require one byte because data in NumPy is stored in [row major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order) by default (and one byte specifically in this case because I'm using `dtype="uint8"`). Take this array for example:
 
 ```python
 >>> x

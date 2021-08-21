@@ -1,5 +1,6 @@
 # Standard Library
 import random
+import collections
 from typing import Iterator, List, Tuple
 
 # Third party
@@ -62,19 +63,20 @@ class StateGenerator:
 
     @staticmethod
     def generator(life: Life) -> Iterator[LifeArray]:
-        state = next(life.seed_generator)
         num_generations = 0
-        history = [state]
+        state = next(life.seed_generator)
+        history = collections.deque(maxlen=3)  # only keeps last three states
         while True:
             yield state
             num_generations += 1
+            history.append(state)
             neighbors = StateGenerator.neighbors(state, life.bounds)
             state = StateGenerator.update(state, neighbors)
-            history = [*history[-2:], state]  # only keep the last three states
             exit_code = StateGenerator.check_exit(history, num_generations)
             if exit_code == 2:
                 # yield 30 more frames for animation before halting
-                yield from (h for _ in range(15) for h in history[-2:])
+                _, *last_two_states = history
+                yield from (s for _ in range(15) for s in last_two_states)
                 break
             elif exit_code == 0:
                 break
@@ -101,12 +103,11 @@ class StateGenerator:
             `2`: An oscillating state of period 2 has been reached
         """
         exit_code = 1
-        if np.array_equal(*history[-2:]):
-            print("reached steady state")
-            exit_code = 2
-        if len(history) == 3:
-            a, _, b = history[-3:]
-            if np.array_equal(a, b):
+        if len(history) > 2:
+            if np.array_equal(history[-2], history[-1]):
+                print("reached steady state")
+                exit_code = 2
+            elif np.array_equal(history[-3], history[-1]):
                 print("oscillating state period 2")
                 exit_code = 2
         if num_generations == MAX_GENERATIONS:
@@ -115,59 +116,67 @@ class StateGenerator:
         return exit_code
 
 
-class SeedArray:
+class TileMaker:
     """Static methods for generating random binary tiles"""
     @staticmethod
     def __call__(shape: ArrayShape, pattern_type: str) -> LifeArray:
         rotator = random.choice((np.fliplr, np.flipud, np.rot90, None))
         if pattern_type == "tiles":
-            array_creator = random.choice((SeedArray.diagonal,
-                                           SeedArray.inverted_diagonal,
-                                           SeedArray.quilt))
-            array = array_creator(shape)
+            tile_maker = random.choice((TileMaker.diagonal,
+                                        TileMaker.inverted_diagonal,
+                                        TileMaker.quilt))
+            array = tile_maker(shape)
         else:
-            array = SeedArray.binary_array(shape)
+            array = TileMaker.noise(shape)
 
         if rotator:
             return rotator(array)
         return array
 
     @staticmethod
-    def binary_array(shape: tuple) -> LifeArray:
-        """Binary noise array, the base working unit for the other methods"""
+    def noise(shape: tuple) -> LifeArray:
+        """Binary noise tile, the base working unit for the other methods"""
         return np.random.randint(0, 2, shape, dtype="uint8")
 
     @staticmethod
     def quilt(shape: tuple) -> LifeArray:
         """A base triangular array"""
-        return np.triu(SeedArray.binary_array(shape))
+        return np.triu(TileMaker.noise(shape))
 
     @staticmethod
     def diagonal(shape: tuple) -> LifeArray:
         """Diagonally symmetric array"""
-        tri = SeedArray.quilt(shape)
+        tri = TileMaker.quilt(shape)
         return np.clip(tri + tri.T, 0, 1)
 
     @staticmethod
     def inverted_diagonal(shape: tuple) -> LifeArray:
         """Diagonally symmetric array with flipped bits in lower triangular"""
-        tri = SeedArray.quilt(shape)
+        tri = TileMaker.quilt(shape)
         return np.triu(np.where(tri, 0, 1)).T + tri
 
 
-class TileMethod:
+class TilingMethod:
     """Static methods for tiling an array with different symmetries"""
     @staticmethod
     def __call__(array: LifeArray, pattern_number: int) -> LifeArray:
-        tiling_method = random.choice((TileMethod.four_corners,
-                                       TileMethod.book_match,
-                                       TileMethod.hamburger,
-                                       TileMethod.repeat))
+        tiling_method = random.choice((TilingMethod.four_corners,
+                                       TilingMethod.book_match,
+                                       TilingMethod.hamburger,
+                                       TilingMethod.repeat))
         return np.tile(tiling_method(array), (pattern_number,)*2)
 
     @staticmethod
     def four_corners(NW: LifeArray) -> LifeArray:
-        """Radial symmetry"""
+        """
+        Radial symmetry, e.g.:
+        ```
+        A B B A
+        C D D C
+        C D D C
+        A B B A
+        ```
+        """
         NE = np.fliplr(NW)
         SW = np.flipud(NW)
         SE = np.flipud(NE)
@@ -175,19 +184,41 @@ class TileMethod:
 
     @staticmethod
     def book_match(L: LifeArray) -> LifeArray:
-        """Vertical symmetry"""
+        """
+        Vertical symmetry, e.g.:
+        ```
+        A B B A
+        A B B A
+        A B B A
+        A B B A
+        ```
+        """
         R = np.fliplr(L)
         return np.block([[L, R], [L, R]])
 
     @staticmethod
     def hamburger(T: LifeArray) -> LifeArray:
-        """Horizontal symmetry"""
+        """
+        Horizontal symmetry, e.g.:
+        ```
+        A A A A
+        B B B B
+        B B B B
+        A A A A
+        ```
+        """
         B = np.flipud(T)
         return np.block([[T, T], [B, B]])
 
     @staticmethod
     def repeat(x: LifeArray) -> LifeArray:
-        """Repeating tiles"""
+        """
+        Repeating tiles, e.g.:
+        ```
+        A A
+        A A
+        ```
+        """
         return np.tile(x, (2, 2))
 
 
@@ -201,7 +232,7 @@ class SeedGenerator:
     product of the tuple is `k`.
 
     This tuple gives a pattern number and initial size which are passed
-    to the seed array creator and tiling method functions.
+    to the seed tile creator and tiling method static classes.
 
     The larger of the two divisors of `k` that were chosen is assigned
     to `tile_size` while the smaller is assigned to `num_tiles`.
@@ -222,15 +253,17 @@ class SeedGenerator:
         return next(self.seed_generator)
 
     def generator(self, life: Life) -> Iterator[LifeArray]:
+        n = life.size
+        k = n // 2
         while True:
-            array_creator = SeedArray()
-            tiling_method = TileMethod()
-            num_tiles, tile_size = self.size_and_pattern(life.size)
-            array = array_creator((tile_size,)*2, life.pattern_type)
+            tile_maker, tiling_method = TileMaker(), TilingMethod()
+            d = [(x, k // x) for x in range(2, k + 1) if k % x == 0]
+            num_tiles, tile_size = sorted(random.choice(d))
+            tile_shape = (tile_size,)*2
+            array = tile_maker(tile_shape, life.pattern_type)
             yield tiling_method(array, num_tiles)
 
-    @staticmethod
-    def size_and_pattern(n: int) -> ArrayShape:
-        k = n // 2
-        d = [(x, k // x) for x in range(2, k + 1) if k % x == 0]
-        return sorted(random.choice(d))
+
+if __name__ == "__main__":
+    life = Life(100)
+    [*life]
