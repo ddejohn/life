@@ -73,7 +73,7 @@ class StateGenerator:
             history = [*history[-2:], state]  # only keep the last three states
             exit_code = StateGenerator.check_exit(history, num_generations)
             if exit_code == 2:
-                # yields 30 more frames for animation before generator stops
+                # yield 30 more frames for animation before halting
                 yield from (h for _ in range(15) for h in history[-2:])
                 break
             elif exit_code == 0:

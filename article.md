@@ -31,7 +31,7 @@ The basic algorithm for implementing Life is as follows:
 
 1. For a given cell, count how many living neighbors it has
 2. Determine whether that cell should die, survive, or be reborn
-3. Repeat for all cells in the array
+3. Repeat for all cells
 
 Each cell's **neighborhood** consists of the eight cells adjacent to it (up, down, left, right, and the diagonals). Here's a cell outlined in yellow and its eight neighbors and their statuses:
 
@@ -66,7 +66,7 @@ Since there are two states in which a cell can be observed and anywhere from 0 t
 
 The way to read these state transitions is from left to right: on the left hand side is a 2-tuple containing the current state of any given cell and the number of *living* neighbors it has, and the right hand side is the next state of that cell. So for instance, the state transition `(0, 5) -> 0` applies to any cell which is dead (the `0` in the 2-tuple) and which has five living neighbors (the `5` in the 2-tuple). As you can see, the next state of that cell is 0, meaning the cell stays dead.
 
-Notice that the vast majority of the state transitions are equivalent based on those three rules from earlier. There's no functional difference between `(0, 5) -> 0` and `(0, 7) -> 0`, for example. Taking this into account, there are actually only three state transitions which we need to consider:
+Notice that the vast majority of the state transitions are equivalent based on those three rules from earlier. There's no functional difference between `(0, 5) -> 0` and `(0, 7) -> 0`, for example. Taking this into account, there are actually only three state transitions which we really care about:
 
 ```python
 (1, 2) -> 1
@@ -86,7 +86,7 @@ Every other possible state (again, a 2-tuple `(alive or dead, number of neighbor
 
 ## Implementation
 
-Conventionally, one might take a looping approach where each cell is checked and updated individually, cell-by-cell. This approach has several pitfalls: manual indexing, and the necessity for manually updating a new array (you can't update any of the cells until you've checked all of them and have determined their next state, since updating one cell could potentially change the number of neighbors of the next cell).
+Conventionally, one might take a looping approach where each cell is checked and updated individually, cell-by-cell. This approach has several pitfalls: manual indexing (a nightmare), and the necessity for manually updating a new array (you can't update any of the cells until you've checked *all of them* and have determined their next state, since updating one cell could potentially change the number of neighbors of the next cell).
 
 I decided to take advantage of NumPy to simplify the calculations with the tradeoff being that the initial set up was a little bit more complicated to figure out. It may help to have `life.py` open somewhere to which you can refer during the following sections, however the relevant code will also be shown.
 
@@ -110,13 +110,11 @@ NEXT_STATE: StateUpdater = np.vectorize(lambda x, y: RULES.get((x, y), 0))
 
 Let's focus on the type hints in order to break down how the `NEXT_STATE()` function works: the `StateArray` type is an alias for `Tuple[np.ndarray, np.ndarray]`, or a 2-tuple of NumPy arrays, and the `StateUpdater` type is a `Callable` (Python's type hint for functions) which takes as its input a `StateArray` and returns a NumPy array. In other words, `NEXT_STATE()` is a closed binary operation on 2D NumPy arrays of `dtype="uint8"`.
 
-The implementation details of `np.vectorize()` are outside the scope of this article. The takeaway is that it will always return a new function of the type `Callable[[np.ndarray, ...], np.ndarray]`.
-
-Here, I'm passing an anonymous function which takes two arguments, `x` and `y`, each representing a single element at the same position in `state` and `neighbors` respectively. The `np.vectorize()` function returns a `Callable[[np.ndarray, np.ndarray], np.ndarray]` which is assigned to `NEXT_STATE`.
+The implementation details of `np.vectorize()` are outside the scope of this article. The takeaway is that `np.vectorize()` will *return a new function* of the type `Callable[[np.ndarray, ...], np.ndarray]`.
 
 The `NEXT_STATE()` function now takes the `state` and `neighbors` arrays as arguments and constructs a new array by getting values based on the `RULES` dictionary lookup. In other words, in order to get the next **generation**, I just need to call `NEXT_STATE(state, neighbors)`.
 
-This hefty layer of abstraction allows me to focus on the next piece of the puzzle: calculating each cell's number of living neighbors.
+Unfortunately, `np.vectorize()` is a only convenience method and doesn't truly take advantage of SIMD as far as I can tell, so this particular technique is actually going to end up being a slight bottleneck. We'll come back to this later but for now, this hefty layer of abstraction allows us to focus on the next piece of the puzzle: calculating each cell's number of living neighbors.
 
 ### Neighborhoods and boundary conditions
 
@@ -124,7 +122,7 @@ The rules of the Game of Life entirely revolve around how many living neighbors 
 
 <p align="center"><img src="./docs/visualizations/basic_heatmap.png"></p>
 
-The tricky part comes in how to deal with cells on the edge of the array. There are two variants on what are known as **boundary conditions.** The first is the **fixed** boundary condition wherein all the cells adjacent to those on the edge of the array are considered dead (think of it as a wall of zeros surrounding the entire array):
+The tricky part comes in how to deal with cells on the edge of the array. These are what are known as **boundary conditions** and there are two variants: the first is the **fixed** boundary condition wherein all the cells adjacent to those on the edge of the array are considered dead (think of it as a wall of zeros surrounding the entire array, which is outlined in turquoise):
 
 <p align="center"><img src="./docs/visualizations/fixed_heatmap.png"></p>
 
@@ -138,7 +136,11 @@ Now, you could write a nested `for` loop over the `r, c` (row, column) coordinat
 
 <p align="center"><img src="./docs/visualizations/neighbors_indexing.png"></p>
 
-But that in and of itself is a nightmare, let alone having to deal with the boundary conditions. Instead, we'll "pad" the `state` array with a 1-cell-wide border and use a `(3, 3)` sliding window!
+But that in and of itself is a nightmare, let alone having to deal with the boundary conditions. Here's what one corner's neighbors look like with periodic boundary conditions:
+
+<p align="center"><img src="./docs/visualizations/periodic_indexing_nightmare.png"></p>
+
+No thanks! Instead, we'll "pad" the `state` array with a 1-cell-wide border and use a `(3, 3)` sliding window!
 
 ### Stride tricks
 
@@ -153,14 +155,14 @@ array([133, 195,  41, 201, 208,  60], dtype=uint8)
 6
 ```
 
-This fixed-memory-per-element constraint allows NumPy to carve out a contiguous chunk of memory, which in turn makes accessing the elements of a given array a lot faster because NumPy doesn't have to do any wonky fiddling with pointers to jumpy around memory grabbing elements like pure Python has to do with its `list` type. We can get a feel for this by checking `np.ndarray.strides`:
+This fixed-memory-per-element constraint allows NumPy to carve out a contiguous chunk of memory in which to store a given array. This in turn makes accessing the elements of an array much faster than, say, Python's `list` type because NumPy doesn't have do any wonky pointer manipulation to jump around your computer's memory in order to grab elements. We can get a feel for this by checking `np.ndarray.strides`:
 
 ```python
 >>> x.strides
 (1,)
 ```
 
-For a 1D array, this is telling us that in order to "travel" to the next element in the array, we simply need to increment by one byte. This pattern follows for higher-dimensional arrays:
+For a 1D array, this is telling us that in order to "travel" to the next element in the array, we simply need to increment the memory pointer by one byte. This pattern follows for higher-dimensional arrays:
 
 ```python
 >>> x = np.random.randint(0, 255, size=(3, 3), dtype="uint8")
@@ -168,7 +170,7 @@ For a 1D array, this is telling us that in order to "travel" to the next element
 >>> (3, 1)
 ```
 
-This is telling us that in order to travel to the next row we increment by 3 bytes. Columnar jumps still only require 1 byte because data in NumPy is stored in column-order by default (and 1 byte because in these examples I'm using `dtype="uint8"`). Go ahead, see for yourself:
+This is telling us that in order to travel to the next *row* we need to increment our pointer by three bytes. Columnar jumps still only require one byte because data in NumPy is stored in column-order by default (and one byte specifically in this case because I'm using `dtype="uint8"`). Take this array for example:
 
 ```python
 >>> x
@@ -177,28 +179,25 @@ array([[218,  19,  18],
        [152,  44,  64]], dtype=uint8)
 ```
 
-Moving from `19` to the next row takes three bytes; one byte to reach `18`, one byte to reach `32`, and finally one more byte to reach `227` which is directly below `19`.
-
-What does any of this have to do with Conway's Game of Life? Well, the way I got around dealing with that indexing nightmare was by padding the original `state` array with a 1-cell-wide border and using `stride_tricks` to take a `(3, 3)` sliding window view into the `state` array with its border:
-
-```python
-padded = LifeFactory.pad(state, **kwds)
-windows = np.lib.stride_tricks.sliding_window_view(padded, (3, 3))
-```
-
-Here, `LifeFactory.pad()` is a static method of the `LifeFactory` factory class which takes `state` and pads it with either a border of zeros for a fixed-boundary game (original `state` outlined in pink):
-
-<p align="center"><img src="./docs/visualizations/fixed_boundary_padded_heatmap.png"></p>
-
-Or, the `.pad()` function returns the original `state` with periodic boundaries, which I'll cover in the following section. For now, let's focus on that ridiculously long function name being called for the assignment to `windows`.
+Moving down one row from `19` takes three bytes; one byte to reach `18`, one byte to reach `32`, and finally one more byte to reach `227` which is directly below `19`. What does any of this have to do with Conway's Game of Life? Well, the way I got around dealing with that indexing nightmare was by padding the original `state` array with a 1-cell-wide border using `np.pad()` and then using a `(3, 3)` sliding window view to check each cell's neighbors!
 
 ### Sliding windows
 
-The `np.lib.stride_tricks.sliding_window_view()` function provides a sequence of views of the input array by directly messing with striding. The implementation details aren't super important, the real key here is that this function returns an array of a very special shape: `(n, n, 3, 3)` where `n` is the original size of the array (I've restricted my implementation to square arrays simply for aesthetics; in general, for an original array of size `(n, m)`, after padding, the sliding window views will be a `(n, m, 3, 3)` array).
+The `np.lib.stride_tricks.sliding_window_view()` function provides a sequence of views of the input array via striding. The implementation details aren't super important, the real key here is that this function returns an array of a very special shape: `(n, n, 3, 3)` where `n` is the original size of the array (I've restricted my implementation to square arrays for a couple reasons I'll talk about in the next article; in general, for an original array of size `(n, m)`, after padding, the sliding window views will be a `(n, m, p, q)` array, where `(p, q)` is the shape of the sliding window you want, assuming that the window shape and the original array shape [work well](https://numpy.org/devdocs/reference/generated/numpy.lib.stride_tricks.sliding_window_view.html#numpy-lib-stride-tricks-sliding-window-view) together).
 
-For example, if you have a `state` array which is `(4, 4)`, *then the sliding window function returns a* `(4, 4)` *array of* `(3, 3)` *arrays.* See where I'm going with this? Essentially, you get a `(4, 4)` array of each of the original array's `(3, 3)` neighborhood! Here's an example with a `state` array of dimensions `(3, 3)` and using fixed dimensions. Here, the original array is outlined in pink.
+For example, if you have a `state` array which is `(3, 3)` then after padding with a fixed or periodic border of one cell, the sliding window function returns a `(3, 3)` array of `(3, 3)` arrays! See where I'm going with this?
 
 <p align="center"><img src="./docs/visualizations/fixed_sliding_window_animation.gif"></p>
+
+In the example gif above, the original `state` array of shape `(3, 3)` is outlined in pink on the left. Each cell in the original array is outlined in yellow. The sliding blue window is an animated depiction of iterating through each `(3, 3)` neighborhood of the corresponding cell outlined in yellow. The subarrays on the right are the individual `(3, 3)` neighborhood views produced by the `np.lib.stride_tricks.sliding_window_view()` function, conveniently arranged into a 3x3 shape!
+
+```python
+>>> windows = np.lib.stride_tricks.sliding_window_view(np.pad(x, 1), (3, 3))
+>>> windows.shape
+(3, 3, 3, 3)
+```
+
+This is made possible with some fancy striding under the hood by NumPy, leaving us to focus on more pressing matters.
 
 ### Counting neighbors
 
@@ -208,11 +207,18 @@ The whole point of this was to figure out how many living neighbors a given cell
 windows.sum(axis=(2, 3)) - state
 ```
 
-The `axis` argument here specifies that we're summing over the third and fourth axes (remember that Python is zero-indexed). One way to think of it is that that each `(3, 3)` neighborhood is "collapsed" down to a scalar which is the sum of the nine elements in that neighborhood (remember that we're dealing with binary data, summing the data is equivalent to counting the number of ones). By collapsing those third and fourth axes down to a scalar, we end up with an `(n, n)` array of neighbor counts (always a positive integer between 0 and 9*).
+The `axis` argument here specifies that we're summing over the third and fourth axes (remember that Python is zero-indexed). One way to think of it is that that each `(3, 3)` neighborhood is "collapsed" down to a scalar which is the sum of the nine elements in that neighborhood (we're dealing with binary data, so summing the values is equivalent to counting the number of ones). By collapsing those third and fourth axes down to a scalar, we end up with an `(n, n)` array of neighbor counts:
 
-Next, we subtract `state` so that we're not counting the value of any given cell itself when counting its neighbors. Again, we can perform this subtraction because the sum over the third and fourth axes collapses the `(n, n, 3, 3)` array back down to `(n, n)` and the `state` array here is `(n, n)`.
+```python
+>>> windows.sum(axis=(2, 3)).shape
+(3, 3)
+```
 
-Et voila! We now have two arrays: the `state`, a binary array representing dead and alive cells, and a `neighbors` array of values between 0 and 8. Remember the `NEXT_STATE()` function from before, the vectorized function made out of a dictionary lookup? We can now pass these two `(n, n)` arrays to that function and NumPy will vectorize the `dictionary` lookups and return a new binary array which represents our new `state`.
+This result will always be a positive integer between 0 and 9, since each of the nine cells in a `(3, 3)` binary array can be 0 or 1. Next, we subtract `state` so that we're not counting the value of any given cell itself when counting its neighbors. Again, we can perform this subtraction because the sum over the third and fourth axes collapses the `(n, n, 3, 3)` array back down to `(n, n)` and the `state` array here is `(n, n)`.
+
+Et voila! We now have two arrays: the `state`, a binary array representing dead and alive cells, and a `neighbors` array of values between 0 and 8. Remember the `NEXT_STATE()` function from before, the vectorized function made out of a dictionary lookup? We can now pass these two `(n, n)` arrays to that function and NumPy will perform the `dictionary` lookups for us and return a new binary array which represents our new `state`.
+
+### Example
 
 Here's a REPL example using a `(2, 2)` array representing the `state` of a given instance of `Life` with the `"fixed"` boundary condition. Here are the padding, sliding window, sum, and subtraction steps encapsulated by the `LifeFactory.neighbors()` function for that `state` array:
 
@@ -337,9 +343,9 @@ array([[0, 0],
        [0, 0]])
 ```
 
-Oops! Both live cells died due to underpopulation, and neither of the previously-dead cells had enough living neighbors in order to be reborn. There you have it though, that's the core logic behind my implementation. The only real difference is that my `RULES` loops are vectorized so that the new `state` is calculated not cell-by-cell but in large chunks of cells at a time (another article about vectorization coming soon!).
+Oops! Both live cells died due to underpopulation, and neither of the previously-dead cells had enough living neighbors in order to be reborn. There you have it though, that's the core logic behind my implementation.
 
-But wait, there's more! We forgot to talk about **periodic boundaries!**
+But wait, there's more! We forgot to talk about **periodic boundaries,** and the bottleneck introduced by that dictionary lookup.
 
 ### Tile and slice
 
@@ -388,3 +394,35 @@ Here `s` is the size of the `state` array minus 1. Here's what the slice looks l
 <p align="center"><img src="./docs/visualizations/tiled_and_sliced_heatmap.png"></p>
 
 This tiled and sliced array is now the `padded` array on which we can perform the sliding window view function, count neighbors, and update `state`.
+
+Of course, I soon realized all of this was moot; there's actually a mode parameter for the `np.pad()` function which does all this heavy lifting for you... Oh well, it was a nice exercise.
+
+## Fixing the bottleneck
+
+As mentioned, our dictionary lookup is actually a pretty severe bottleneck on this program. It's not *that* big a deal since the code I'm using to actually create the animated gifs takes quite a while to do so anyway for arrays of shape `(100, 100)` or greater. But there was still noticeable lag when running Life up to the max allowed number of generations (1000).
+
+The issue here is that `np.vectorize()` is a little bit of a misnomer; it's really just a convenience method which allows you to apply a function to two arrays without having to write the `for` loop logic yourself. At the end of the day it's still quite slow in the context of the greater NumPy library. As far as I can tell, `np.vectorize()` doesn't actually **vectorize** your function for you, which is the process by which an algorithm is written in or converted to such a form as to take advantage of your CPU's SIMD capabilities.
+
+Realizing this, and knowing that arithmetic operations *are* properly vectorized in NumPy, I set out to find a closed formula which could calculate the next state of the cells array without resorting to a `dict` lookup. Here's what I came up with:
+
+```python
+def next_state(s: np.ndarray, n: np.ndarray) -> np.ndarray:
+    return (n < 4) * (1 - s * (n % 2 - 1) + n) // 4
+```
+
+While it certainly isn't pretty (and I wouldn't be surprised if it can be reduced), it does an excellent job of opening up that bottleneck:
+
+```python
+vectorized dict: 14.12 s
+formula: 0.91 s
+```
+
+That test was run on a `(1000, 1000)` array, which is *much* larger than my program will even allow the user to input, but it's clear that when possible it's always a good idea to try to find a vectorize-able function!
+
+## Seed generation
+
+I'll write another post about how I decided to deal with seed generation. Originally, the seeds were just monolithic tiles of uniformly distributed binary noise and while they're interesting in their own right, they can also become quite mundane after a couple dozen runs of Life, so I set out (again with trusty NumPy by my side) to come up with more options for random seed generation. Here are a few examples:
+
+<p align="center"><img src="./docs/visualizations/120x120_symmetries.gif"></p>
+
+Thanks for reading!
