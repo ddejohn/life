@@ -6,20 +6,21 @@ A NumPy-oriented implementation of [Conway's Game of Life](https://en.wikipedia.
 
 *A period-8 oscillator, period-9 oscillator, and period-2 oscillator, with the period-8 and period-9 oscillators repeating on the right as horizontal reflections.*
 
-* [Intro](https://ddejohn.github.io/life#intro)
-    * [The algorithm](https://ddejohn.github.io/life#the-algorithm)
-    * [Each cell is a finite automoton!](https://ddejohn.github.io/life#each-cell-is-a-finite-automoton)
-* [Implementation](https://ddejohn.github.io/life#implementation)
-    * [Encoding the rules](https://ddejohn.github.io/life#encoding-the-rules)
-    * [Neighborhoods and boundary conditions](https://ddejohn.github.io/life#neighborhoods-and-boundary-conditions)
-    * [Checking neighbors](https://ddejohn.github.io/life#checking-neighbors)
-    * [Stride tricks](https://ddejohn.github.io/life#stride-tricks)
-    * [Sliding windows](https://ddejohn.github.io/life#sliding-windows)
-    * [Counting neighbors](https://ddejohn.github.io/life#counting-neighbors)
-    * [Example](https://ddejohn.github.io/life#example)
-    * [Tile and slice](https://ddejohn.github.io/life#tile-and-slice)
-* [Fixing the bottleneck](https://ddejohn.github.io/life#fixing-the-bottleneck)
-* [Seed generation](https://ddejohn.github.io/life#seed-generation)
+- [life](#life)
+    - [Intro](#intro)
+        - [The algorithm](#the-algorithm)
+        - [Each cell is a finite automaton!](#each-cell-is-a-finite-automaton)
+    - [Implementation](#implementation)
+        - [Encoding the rules](#encoding-the-rules)
+        - [Neighborhoods and boundary conditions](#neighborhoods-and-boundary-conditions)
+        - [Checking neighbors](#checking-neighbors)
+        - [Stride tricks](#stride-tricks)
+        - [Sliding windows](#sliding-windows)
+        - [Counting neighbors](#counting-neighbors)
+        - [Example](#example)
+        - [Tile and slice](#tile-and-slice)
+    - [Fixing the bottleneck](#fixing-the-bottleneck)
+    - [Seed generation](#seed-generation)
 
 ## Intro
 
