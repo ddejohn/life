@@ -4,21 +4,20 @@
 
 *A period-8 oscillator, period-9 oscillator, and period-2 oscillator, with the period-8 and period-9 oscillators repeating on the right as horizontal reflections.*
 
-- [Conway's Game of Life with NumPy](#conways-game-of-life-with-numpy)
-    - [Intro](#intro)
-        - [The algorithm](#the-algorithm)
-        - [Each cell is a finite automaton!](#each-cell-is-a-finite-automaton)
-    - [Implementation](#implementation)
-        - [Encoding the rules](#encoding-the-rules)
-        - [Neighborhoods and boundary conditions](#neighborhoods-and-boundary-conditions)
-        - [Checking neighbors](#checking-neighbors)
-        - [Stride tricks](#stride-tricks)
-        - [Sliding windows](#sliding-windows)
-        - [Counting neighbors](#counting-neighbors)
-        - [Example](#example)
-        - [Tile and slice](#tile-and-slice)
-    - [Fixing the bottleneck](#fixing-the-bottleneck)
-    - [Seed generation](#seed-generation)
+* [Intro](#intro)
+    * [The algorithm](#the-algorithm)
+    * [Each cell is a finite automaton!](#each-cell-is-a-finite-automaton)
+* [Implementation](#implementation)
+    * [Encoding the rules](#encoding-the-rules)
+    * [Neighborhoods and boundary conditions](#neighborhoods-and-boundary-conditions)
+    * [Checking neighbors](#checking-neighbors)
+    * [Stride tricks](#stride-tricks)
+    * [Sliding windows](#sliding-windows)
+    * [Counting neighbors](#counting-neighbors)
+    * [Example](#example)
+    * [Tile and slice](#tile-and-slice)
+* [Fixing the bottleneck](#fixing-the-bottleneck)
+* [Seed generation](#seed-generation)
 
 ## Intro
 
