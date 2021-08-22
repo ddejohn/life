@@ -27,7 +27,7 @@ class Life:
         self.seed_type = seed_type
         self.pad_mode = "constant" if self.bounds == "fixed" else "wrap"
         self.seed = self.__seed_generator()
-        self.state = self.__state_generator()
+        self.state = self.__state_generator(next(self.seed))
         self.history = collections.deque(maxlen=3)
         self.generations = 0
 
@@ -73,8 +73,7 @@ class Life:
     def __seed_generator(self) -> seeds.LifeSeedGenerator:
         return seeds.new_seed_generator(self.size, self.seed_type)
 
-    def __state_generator(self) -> LifeIterator:
-        state = next(self.seed)
+    def __state_generator(self, state) -> LifeIterator:
         while True:
             yield state
             self.generations += 1
