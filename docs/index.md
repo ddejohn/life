@@ -4,7 +4,7 @@ A NumPy-oriented implementation of [Conway's Game of Life](https://en.wikipedia.
 
 <p align="center"><img src="./visualizations/banner.gif"></p>
 
-*A period-8 oscillator, period-9 oscillator, and period-2 oscillator, with the period-8 and period-9 oscillators repeating on the right as horizontal reflections. This composite oscillator therefore has a period of 72 cycles.*
+*A period-8 oscillator, period-9 oscillator, and period-2 oscillator, with the period-8 and period-9 oscillators repeating on the right as horizontal reflections.*
 
 ## Intro
 
