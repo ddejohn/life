@@ -55,7 +55,7 @@ class PatternValueError(LifeParamsError):
         super().__init__(f"{msg}\n{PATTERN_ERROR_MSG}")
 
 
-def validate_args(*, size: Any, bounds: Any, pattern_type: Any) -> LifeArgs:
+def validate_args(size: Any, bounds: Any, pattern_type: Any) -> None:
     """Ensure Life parameters are correct"""
     if (t := type(size)) != int:
         err = f"Invalid `size` type '{t.__name__}'."
@@ -77,5 +77,3 @@ def validate_args(*, size: Any, bounds: Any, pattern_type: Any) -> LifeArgs:
     if pattern_type not in ("tiles", "noise"):
         err = f"Invalid `pattern_type` value '{pattern_type}'."
         raise PatternValueError(err)
-
-    return size, bounds, pattern_type

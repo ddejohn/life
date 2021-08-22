@@ -427,6 +427,6 @@ Thanks for reading!
 
 Just kidding, here's an example of Life running on one of these symmetric seeds:
 
-<p align="center"><img width="700" src="./visualizations/100x100_constant_tiles_858_frames.gif"></p>
+<p align="center"><img width="700" src="./visualizations/symmetric_seed_example.gif"></p>
 
 Okay, thanks for sticking around!
