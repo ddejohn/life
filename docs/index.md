@@ -2,7 +2,7 @@
 
 A NumPy-oriented implementation of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway's_Game_of_Life) with options for fixed or periodic boundary conditions.
 
-![](./visualizations/banner.gif)
+<p align="center"><img src="./visualizations/banner.gif"></p>
 
 ## Intro
 
