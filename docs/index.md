@@ -6,6 +6,21 @@ A NumPy-oriented implementation of [Conway's Game of Life](https://en.wikipedia.
 
 *A period-8 oscillator, period-9 oscillator, and period-2 oscillator, with the period-8 and period-9 oscillators repeating on the right as horizontal reflections.*
 
+* [Intro](https://ddejohn.github.io/life#intro)
+    * [The algorithm](https://ddejohn.github.io/life#the-algorithm)
+    * [Each cell is a finite automoton!](https://ddejohn.github.io/life#each-cell-is-a-finite-automoton)
+* [Implementation](https://ddejohn.github.io/life#implementation)
+    * [Encoding the rules](https://ddejohn.github.io/life#encoding-the-rules)
+    * [Neighborhoods and boundary conditions](https://ddejohn.github.io/life#neighborhoods-and-boundary-conditions)
+    * [Checking neighbors](https://ddejohn.github.io/life#checking-neighbors)
+    * [Stride tricks](https://ddejohn.github.io/life#stride-tricks)
+    * [Sliding windows](https://ddejohn.github.io/life#sliding-windows)
+    * [Counting neighbors](https://ddejohn.github.io/life#counting-neighbors)
+    * [Example](https://ddejohn.github.io/life#example)
+    * [Tile and slice](https://ddejohn.github.io/life#tile-and-slice)
+* [Fixing the bottleneck](https://ddejohn.github.io/life#fixing-the-bottleneck)
+* [Seed generation](https://ddejohn.github.io/life#seed-generation)
+
 ## Intro
 
 I had always been very intrigued by [Conway's Game of Life](https://en.m.wikipedia.org/wiki/Conway%27s_Game_of_Life) but had never actually implemented it myself. When I looked up the ruleset, I realized I had no excuse.
@@ -27,7 +42,7 @@ Those are the original rules, but they can actually be consolidated to only thre
 
 [(source)](https://en.m.wikipedia.org/wiki/Conway%27s_Game_of_Life#Rules)
 
-## The algorithm
+### The algorithm
 
 The basic algorithm for implementing Life is as follows:
 
@@ -39,7 +54,7 @@ Each cell's **neighborhood** consists of the eight cells adjacent to it (up, dow
 
 <p align="center"><img src="./visualizations/neighbors_alive_dead.png"></p>
 
-## Each cell is a finite automaton!
+### Each cell is a finite automaton!
 
 The word **state** in this section will specifically refer to the status (alive or dead) of an individual cell. Familiarity with [discrete finite state machines](https://en.m.wikipedia.org/wiki/Finite-state_machine) would be helpful here, but is not necessary.
 
@@ -130,7 +145,7 @@ The other is the **periodic** boundary condition which means that each edge of t
 
 <p align="center"><img src="./visualizations/periodic_heatmap.png"></p>
 
-### Finding `neighbors`
+### Checking neighbors
 
 Now, you could write a nested `for` loop over the `r, c` (row, column) coordinates of each neighbor of a given cell:
 
