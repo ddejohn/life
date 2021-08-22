@@ -1,11 +1,21 @@
 """Exception objects for error handling"""
 
-from typing import Any, Tuple
-LifeArgs = Tuple[int, str, str]
+from typing import Any
 
 
 SIZE_ERROR_MSG = """
-The `size` parameter must be a positive integer >= 10.
+The `size` parameter must be a positive integer between 10.
+"""
+
+
+SIZE_WARNING_MSG = """
+!!! WARNING !!!
+
+While Life can iterate arrays of size {n}, it may take several
+minutes to render the animated gif!
+
+It is recommended that you stick to arrays smaller than 200x200
+if you intend to create an animation.
 """
 
 
@@ -55,7 +65,7 @@ class PatternValueError(LifeParamsError):
         super().__init__(f"{msg}\n{PATTERN_ERROR_MSG}")
 
 
-def validate_args(*, size: Any, bounds: Any, pattern_type: Any) -> LifeArgs:
+def validate_args(size: Any, bounds: Any, pattern_type: Any) -> None:
     """Ensure Life parameters are correct"""
     if (t := type(size)) != int:
         err = f"Invalid `size` type '{t.__name__}'."
@@ -63,6 +73,8 @@ def validate_args(*, size: Any, bounds: Any, pattern_type: Any) -> LifeArgs:
     if size < 10:
         err = f"Invalid `size` value '{size}'."
         raise SizeValueError(err)
+    if size > 200:
+        print(SIZE_WARNING_MSG.format(n=size))
 
     if (t := type(bounds)) != str:
         err = f"Invalid `bounds` of type '{t.__name__}'."
@@ -77,5 +89,3 @@ def validate_args(*, size: Any, bounds: Any, pattern_type: Any) -> LifeArgs:
     if pattern_type not in ("tiles", "noise"):
         err = f"Invalid `pattern_type` value '{pattern_type}'."
         raise PatternValueError(err)
-
-    return size, bounds, pattern_type

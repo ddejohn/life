@@ -2,7 +2,7 @@
 
 A NumPy-oriented implementation of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway's_Game_of_Life) with options for fixed or periodic boundary conditions.
 
-![](./visualizations/1920x1080_fixed_ff928b_b392ac_1000_frames.gif)
+![](./visualizations/banner.gif)
 
 ## Intro
 
@@ -427,6 +427,6 @@ Thanks for reading!
 
 Just kidding, here's an example of Life running on one of these symmetric seeds:
 
-<p align="center"><img width="700" src="./visualizations/100x100_constant_tiles_858_frames.gif"></p>
+<p align="center"><img width="700" src="./visualizations/symmetric_seed_example.gif"></p>
 
 Okay, thanks for sticking around!
