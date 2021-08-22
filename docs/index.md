@@ -1,12 +1,10 @@
-# life
-
-A NumPy-oriented implementation of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway's_Game_of_Life) with options for fixed or periodic boundary conditions.
+# Conway's Game of Life with NumPy
 
 <p align="center"><img src="./visualizations/banner.gif"></p>
 
 *A period-8 oscillator, period-9 oscillator, and period-2 oscillator, with the period-8 and period-9 oscillators repeating on the right as horizontal reflections.*
 
-- [life](#life)
+- [Conway's Game of Life with NumPy](#conways-game-of-life-with-numpy)
     - [Intro](#intro)
         - [The algorithm](#the-algorithm)
         - [Each cell is a finite automaton!](#each-cell-is-a-finite-automaton)
