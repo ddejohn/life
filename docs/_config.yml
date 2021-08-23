@@ -1,6 +1,3 @@
 remote-theme: jekyll/minima
 minima:
     skin: dark
-
-title: ddejohn/life
-description: A NumPy-oriented implementation of Conway's Game of Life with options for fixed or periodic boundary conditions.

@@ -1,4 +1,6 @@
-# Conway's Game of Life with NumPy
+# [./life](https://github.com/ddejohn/life)
+
+A NumPy-oriented implementation of Conway's Game of Life with options for fixed or periodic boundary conditions.
 
 <p align="center"><img src="./visualizations/banner.gif"></p>
 
