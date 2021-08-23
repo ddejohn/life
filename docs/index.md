@@ -49,6 +49,7 @@ The basic algorithm for implementing Life is as follows:
 1. For a given cell, count how many living neighbors it has
 2. Determine whether that cell should die, survive, or be reborn
 3. Repeat for all cells
+4. Update all cells to their new value
 
 Each cell's **neighborhood** consists of the eight cells adjacent to it (up, down, left, right, and the diagonals). Here's a cell outlined in yellow and its eight neighbors and their statuses:
 
