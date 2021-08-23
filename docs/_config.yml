@@ -1,4 +1,4 @@
-remote-theme: minima
+remote-theme: jekyll/minima
 minima:
     skin: dark
 
