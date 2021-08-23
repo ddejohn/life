@@ -1,4 +1,4 @@
-# [./life](https://github.com/ddejohn/life)
+# [`./life`](https://github.com/ddejohn/life)
 
 A NumPy-oriented implementation of Conway's Game of Life with options for fixed or periodic boundary conditions.
 
@@ -6,7 +6,7 @@ A NumPy-oriented implementation of Conway's Game of Life with options for fixed 
 
 *From left to right: [Kok's galaxy](https://www.conwaylife.com/wiki/Kok%27s_galaxy), a period-8 oscillator; [68P9](https://www.conwaylife.com/wiki/68P9), a period-9 oscillator; and [2.2.6](https://www.conwaylife.com/wiki/2.2.6), a period-2 oscillator. Kok's galaxy and 68P9 are then reflected horizontally on the right.*
 
-* [Intro](#intro)
+* [Conway's Game of Life](#conways-game-of-life)
     * [The algorithm](#the-algorithm)
     * [Each cell is a finite automaton!](#each-cell-is-a-finite-automaton)
 * [Implementation](#implementation)
@@ -21,7 +21,7 @@ A NumPy-oriented implementation of Conway's Game of Life with options for fixed 
 * [Fixing the bottleneck](#fixing-the-bottleneck)
 * [Seed generation](#seed-generation)
 
-## Intro
+## Conway's Game of Life
 
 I had always been very intrigued by [Conway's Game of Life](https://en.m.wikipedia.org/wiki/Conway%27s_Game_of_Life) but had never actually implemented it myself. When I looked up the ruleset, I realized I had no excuse.
 
