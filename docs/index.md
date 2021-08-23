@@ -2,7 +2,7 @@
 
 <p align="center"><img src="./visualizations/banner.gif"></p>
 
-*A period-8 oscillator, period-9 oscillator, and period-2 oscillator, with the period-8 and period-9 oscillators repeating on the right as horizontal reflections.*
+*From left to right: [Kok's galaxy](https://www.conwaylife.com/wiki/Kok%27s_galaxy), a period-8 oscillator; [68P9](https://www.conwaylife.com/wiki/68P9), a period-9 oscillator; and [2.2.6](https://www.conwaylife.com/wiki/2.2.6), a period-2 oscillator. Kok's galaxy and 68P9 are then reflected horizontally on the right.*
 
 * [Intro](#intro)
     * [The algorithm](#the-algorithm)
