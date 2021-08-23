@@ -21,12 +21,12 @@ class TileMaker:
                                     TileMaker.inverted_diagonal,
                                     TileMaker.quilt))
         array = tile_maker((tile_size,)*2)
-        return rotator(array) if rotator else array
+        return rotator(array) if rotator is not None else array
 
     @staticmethod
     def noise(shape: ArrayShape) -> Tile:
         """Binary noise tile, the base working unit for the other methods"""
-        return np.random.randint(0, 2, shape, dtype="uint8")
+        return np.random.randint(2, size=shape, dtype="uint8")
 
     @staticmethod
     def quilt(shape: ArrayShape) -> Tile:

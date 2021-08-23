@@ -84,10 +84,10 @@ class Life:
 
     def __update(self, state: LifeState) -> LifeState:
         """Calculates the next generation of `Life` given the current `state`
-        and number of living neighbor `nghbrs`."""
+        and number of living neighbor `nbrs`."""
         adj = windows(np.pad(state, 1, self.pad_mode), (3, 3)).sum(axis=(2, 3))
-        nghbrs = adj - state
-        return (nghbrs < 4) * (1 - state * (nghbrs % 2 - 1) + nghbrs) // 4
+        nbrs = adj - state
+        return (nbrs < 4) * (1 - state * (nbrs % 2 - 1) + nbrs) // 4
 
     def __check_exit(self) -> int:
         """
