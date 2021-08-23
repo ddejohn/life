@@ -1,5 +1,5 @@
 remote-theme: jekyll/minima
-jekyll/minima:
+minima:
     skin: dark
 
 title: ddejohn/life
