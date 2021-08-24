@@ -232,7 +232,7 @@ The `axis` argument here specifies that we're summing over the third and fourth 
 
 This result will always be a positive integer between 0 and 9, since each of the nine cells in a `(3, 3)` binary array can be 0 or 1. Next, we subtract `state` so that we're not counting the value of any given cell itself when counting its neighbors. Again, we can perform this subtraction because the sum over the third and fourth axes collapses the `(n, n, 3, 3)` array back down to `(n, n)` and the `state` array here is `(n, n)`.
 
-Et voila! We now have two arrays: the `state`, a binary array representing dead and alive cells, and a `neighbors` array of values between 0 and 8. Remember the `NEXT_STATE()` function from before, the vectorized function made out of a dictionary lookup? We can now pass these two `(n, n)` arrays to that function and NumPy will perform the `dictionary` lookups for us and return a new binary array which represents our new `state`.
+*Et voila!* We now have two arrays: the `state`, a binary array representing dead and alive cells, and a `neighbors` array of values between 0 and 8. Remember the `NEXT_STATE()` function from before, the vectorized function made out of a dictionary lookup? We can now pass these two `(n, n)` arrays to that function and NumPy will perform the `dictionary` lookups for us and return a new binary array which represents our new `state`.
 
 ### Example
 
