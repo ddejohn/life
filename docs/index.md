@@ -164,7 +164,7 @@ NumPy's arrays are truly remarkable. Because they are homogeneous, each element 
 
 ```python
 >>> import numpy as np
->>> x = np.array(0, 255, size=(6,), dtype="uint8")
+>>> x = np.random.randint(0, 255, size=(6,), dtype="uint8")
 >>> x
 array([133, 195,  41, 201, 208,  60], dtype=uint8)
 >>> x.size * x.itemsize  # itemsize is in units of bytes
