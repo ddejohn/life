@@ -6,7 +6,7 @@ A NumPy-oriented implementation of [Conway's Game of Life](https://en.wikipedia.
 
 ## Implementation
 
-https://ddejohn.github.io/life/
+https://ddejohn.github.io/2021/08/20/life.html
 
 ## Planned features
 
